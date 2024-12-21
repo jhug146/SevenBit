@@ -1,7 +1,6 @@
 """
 Tools file stores the UI class and two useful functions import_file and get_csv_as_list
 """
-
 import tkinter as tk
 import tkinter.font
 import tkinter.filedialog
@@ -11,7 +10,6 @@ from PIL.ImageTk import PhotoImage
 import win32api
 import csv
 import json
-import os
 
 from upload_display import ScrollableFrame
 
@@ -27,7 +25,7 @@ class UI:
         self.window.title("SevenBit")
         self.scrw, self.scrh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{int(self.scrw * 0.8)}x{int(self.scrh * 0.8)}")
-        self.window.iconphoto(False, tools_image("icon.png"))
+        self.window.iconphoto(False, PhotoImage(file="images/icon.png"))
 
         self.main_frame = tk.Frame(self.window, width=self.scrw, height=self.scrh)
         self.main_frame.pack()
@@ -63,11 +61,7 @@ class UI:
         for headers in headers_list:  # Item table headers
             tk.Label(self.header_frame, text=headers[0], relief="solid", borderwidth=1, width=headers[1], height=int(self.scrh / 400), bg="#e5e5e5").grid(row=0, column=headers[2])
 
-        dir = os.getcwd()
-        try:
-            img = Image.open(os.path.join(dir, "images", "refresh.png"))
-        except:
-            img = Image.open(os.path.join(dir, "SevenBit", "images", "refresh.png"))
+        img = Image.open("images/refresh.png")
         img = img.resize((28,28))
         self.refresh_image = PhotoImage(img)
         self.refresh_button = tk.Button(self.table_frame, image=self.refresh_image, command=self.refresh_table)
@@ -320,7 +314,7 @@ class UI:
         self.options_win = tk.Toplevel(self.window)
         self.options_win.geometry("350x115")
         self.options_win.title("Upload Options")
-        self.options_win.iconphoto(False, tools_image("icon.png"))
+        self.options_win.iconphoto(False, PhotoImage(file="images/icon.png"))
 
         def normal():
             self.options_win.destroy()
@@ -355,11 +349,7 @@ class UI:
 
     def place_table_image(self, frame, path):
         if "http" in path:
-            dir = os.getcwd()
-            if os.path.exists(os.path.join(dir, "images")):
-                path = os.path.join(dir, "images", "blank.png")
-            else:
-                path = os.path.join(dir, "SevenBit", "images", "blank.png")
+            path = "images/blank.png"
         img = Image.open(path)
         img = img.resize((34,30), Image.LANCZOS)
         imgr = PhotoImage(img)
@@ -398,10 +388,6 @@ def import_file(ui):
 
 
 def load_json_file(file, name=None):
-    dir = os.get_cwd()
-    file = os.path.join(dir, "user", file)
-    if not os.path.isdir(file):
-        file = os.path.join(dir, "SevenBit", "user", file)
     with open(file, encoding="utf-8") as file:
         loaded = json.load(file)
         if name == "default":
@@ -478,17 +464,3 @@ def split_numbers(nums):
     
 def chunkstring(string, length):
     return (string[0+i:length+i] for i in range(0, len(string), length))
-
-def tools_image(name):
-    dir = os.getcwd()
-    try:
-        return PhotoImage(file=os.path.join(dir, "images", name))
-    except:
-        return PhotoImage(file=os.path.join(dir, "SevenBit", "images", name))
-
-def tk_photo_image(name):
-    dir = os.getcwd()
-    try:
-        return tk.PhotoImage(file=os.path.join(dir, "images", name))
-    except:
-        return tk.PhotoImage(file=os.path.join(dir, "SevenBit", "images", name))

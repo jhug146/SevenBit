@@ -4,7 +4,6 @@ Data from the html.csv file
 """
 import tkinter as tk
 import tools
-import os
 
 
 class ItemType:
@@ -16,10 +15,9 @@ class ItemType:
         self.accounts = accounts
 
     def get_info(self, name="default"):
-        directory = os.getcwd()
-        self.translation_data = tools.load_json_file("translation.json", name)
-        self.upload_data = tools.load_json_file("upload.json", name)
-        self.download_data = tools.load_json_file("download.json")
+        self.translation_data = tools.load_json_file("user/translation.json", name)
+        self.upload_data = tools.load_json_file("user/upload.json", name)
+        self.download_data = tools.load_json_file("user/download.json")
 
         if hasattr(self, "accounts"):
             self.accounts.update_title()

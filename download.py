@@ -45,7 +45,7 @@ class GetItems(object):
         self.entry_win = tk.Toplevel(self.ui.window)
         self.entry_win.protocol("WM_DELETE_WINDOW", self.close_window)
         self.entry_win.title("Download")
-        self.entry_win.iconphoto(False, tools.tk_photo_image("icon.png"))
+        self.entry_win.iconphoto(False, tk.PhotoImage(file="images/icon.png"))
         self.entry_var = tk.StringVar(self.entry_win)
 
         tk.Label(self.entry_win, text="Enter list of item numbers seperated by commas").grid(row=0, column=0)

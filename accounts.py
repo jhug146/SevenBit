@@ -11,8 +11,7 @@ class Accounts:
     def __init__(self, ui, item_type):
         self.ui = ui
         self.item_type = item_type
-        self.account_data = tools.load_json_file("accounts.json")
-
+        self.account_data = tools.load_json_file("user/accounts.json")
         self.accounts_choice = self.account_data[self.account_data["default"]]
         self.update_title()
 
@@ -47,7 +46,7 @@ class Accounts:
         self.dwin = tk.Toplevel()
         self.dwin.title("Choose account")
         self.dwin.geometry("120x45")
-        self.dwin.iconphoto(False, tools.tk_photo_image("icon.png"))
+        self.dwin.iconphoto(False, tk.PhotoImage(file="images/icon.png"))
 
         tk.Label(self.dwin, text="Enter account name:").grid(row=0, column=0)
         self.account_entry = tk.Entry(self.dwin, textvariable=self.to_choose)
