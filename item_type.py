@@ -17,9 +17,14 @@ class ItemType:
 
     def get_info(self, name="default"):
         directory = os.getcwd()
-        self.translation_data = tools.load_json_file(os.path.join(directory, "user/translation.json"), name)
-        self.upload_data = tools.load_json_file(os.path.join(directory, "user/upload.json"), name)
-        self.download_data = tools.load_json_file(os.path.join(directory, "user/download.json"))
+        try:
+            self.translation_data = tools.load_json_file(os.path.join(directory, "user", "translation.json"), name)
+            self.upload_data = tools.load_json_file(os.path.join(directory, "user", "upload.json"), name)
+            self.download_data = tools.load_json_file(os.path.join(directory, "user", "download.json"))
+        except:
+            self.translation_data = tools.load_json_file(os.path.join(directory, "SevenBit", "user", "translation.json"), name)
+            self.upload_data = tools.load_json_file(os.path.join(directory, "SevenBit", "user", "upload.json"), name)
+            self.download_data = tools.load_json_file(os.path.join(directory, "SevenBit", "user", "download.json"))
 
         if hasattr(self, "accounts"):
             self.accounts.update_title()
