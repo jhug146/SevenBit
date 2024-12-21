@@ -15,14 +15,9 @@ class ItemType:
         self.accounts = accounts
 
     def get_info(self, name="default"):
-        try:
-            self.translation_data = tools.load_json_file("user/translation.json", name)
-            self.upload_data = tools.load_json_file("user/upload.json", name)
-            self.download_data = tools.load_json_file("user/download.json")
-        except:
-            self.translation_data = tools.load_json_file("_internal/user/translation.json", name)
-            self.upload_data = tools.load_json_file("_internal/user/upload.json", name)
-            self.download_data = tools.load_json_file("_internal/user/download.json")
+        self.translation_data = tools.load_json_file("./user/translation.json", name)
+        self.upload_data = tools.load_json_file("./user/upload.json", name)
+        self.download_data = tools.load_json_file("./user/download.json")
 
         if hasattr(self, "accounts"):
             self.accounts.update_title()
