@@ -1,5 +1,3 @@
-from turtle import up
-from bottle_websocket import websocket
 from ebaysdk.trading import Connection as TradingConnection
 
 from concurrent.futures import ThreadPoolExecutor, as_completed

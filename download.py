@@ -1,11 +1,8 @@
 from ebaysdk.shopping import Connection as ShoppingConnection
-from oauthclient import oauth2api
-from oauthclient.model.model import environment
 
 import tkinter as tk
 from urllib.request import urlopen
 from PIL import Image
-from datetime import datetime
 import os
 import tools
 import json
@@ -35,20 +32,6 @@ class GetItems(object):
             auth=("JamesHug-UploadTo-PRD-ec8e89b76-6439cfe6", "PRD-c8e89b76adc6-3316-4e6d-a8c2-0227"),
         )
         return response.json()["access_token"]
-
-    def get_cxzczxtoken(self):
-        if hasattr(self, "token"):
-            if datetime.now() < self.token.token_expiry:
-                return self.token
-
-        self.token = oauth2api.oauth2api.get_application_token(
-            "PRD-c8e89b76adc6-3316-4e6d-a8c2-0227",
-            environment.PRODUCTION,
-            "https://api.ebay.com/oauth/api_scope",
-            "JamesHug-UploadTo-PRD-ec8e89b76-6439cfe6",
-            "PRD-c8e89b76adc6-3316-4e6d-a8c2-0227"
-        )
-        return self.token
 
     def close_window(self):
         if hasattr(self, "entry_win"):

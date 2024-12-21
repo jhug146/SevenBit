@@ -1,7 +1,6 @@
 """
 Tools file stores the UI class and two useful functions import_file and get_csv_as_list
 """
-from datetime import datetime
 import tkinter as tk
 import tkinter.font
 import tkinter.filedialog
