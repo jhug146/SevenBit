@@ -1,5 +1,5 @@
 import tkinter as tk
-
+from . import tools
 
 class UploadDisplay(object):
 
@@ -14,7 +14,7 @@ class UploadDisplay(object):
         self.win = tk.Toplevel(self.ui.window)
         self.win.geometry("400x400")
         self.win.title("Upload Progress")
-        self.win.iconphoto(False, tk.PhotoImage(file="images/icon.png"))
+        self.win.iconphoto(False, tools.tk_photo_image("icon.png"))
 
         self.errors_frame = tk.Frame(self.win, width=self.ui.scrw*0.6, height=self.ui.scrh)
         self.errors_frame.place(x=10, y=0)
