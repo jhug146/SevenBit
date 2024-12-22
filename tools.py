@@ -43,7 +43,7 @@ class UI:
 
         frames = (
             (self.middle_frame, 0, 0),
-            (self.right_frame, 900, 0),
+            (self.right_frame, self.scrw * 0.58, 0),
             (self.options_frame, 0, 0),
             (self.table_frame, 0, 100),
             (self.header_frame, 0, 0),
