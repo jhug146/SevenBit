@@ -15,10 +15,7 @@ class EbayUpload:
     SITE_IDS = ("0", "3", "15", "71", "77", "101", "186")
     SITE_NAMES = ("ebay.com", "ebay.co.uk", "ebay.com.au", "ebay.fr", "ebay.de", "ebay.it", "ebay.es")
     SITE_CURRS = ("USD", "GBP", "AUD", "EUR", "EUR", "EUR", "EUR")
-    CONDITION_LOOKUP = {
-        "New with tags": "1000",
-        "Used": "3000"
-    }
+
     def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type):
         self.accounts = accounts
         self.item_type = item_type
@@ -244,7 +241,7 @@ class EbayUpload:
                 "Site" : self.SITE_ABBRS[site_num],
                 "SiteId": self.SITE_IDS[site_num],
                 "Currency": self.SITE_CURRS[site_num],
-                "ConditionID": self.CONDITION_LOOKUP[details["eBay Condition"]],
+                "ConditionID": details["eBay Condition"],
                 "PrimaryCategory": {
                     "CategoryID": str(details["eBay Category1ID"])
                 },
