@@ -33,7 +33,10 @@ class EbayTranslator:
             GoogleTranslator(source="auto", target="italian"),
             GoogleTranslator(source="auto", target="spanish")
         )
-        self.rates = requests.get("https://api.fastforex.io/fetch-multi?from=USD&to=EUR,AUD,GBP&api_key=3bb4d3047f-91ccb43c4f-qtf3r1", headers = {"Accept": "application/json"}).json()["results"]
+        self.rates = requests.get(
+            f"https://api.fastforex.io/fetch-multi?from=USD&to=EUR,AUD,GBP&api_key={item_type.translation_data["fastforex-api-key"]}",
+            headers = {"Accept": "application/json"}
+        ).json()["results"]
         self.usd_rate = 1 / self.rates["GBP"]
 
     def translate(self, items):

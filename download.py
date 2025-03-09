@@ -11,6 +11,7 @@ import requests
 
 class GetItems(object):
     ITEM_NUMBER_LENGTH = 12
+    UPLOAD_BATCH_SIZE = 20
     def __init__(self, accounts_choice, ui, item_type, upload_changer):
         self.ui = ui
         self.item_type = item_type
@@ -26,10 +27,11 @@ class GetItems(object):
         self.file_count = 0
 
     def get_token(self):
+        acc = self.accounts_choice["credentials"]
         response = requests.post(
             "https://api.ebay.com/oauth/api_scope",
             data={"grant_type": "client_credentials"},
-            auth=("JamesHug-UploadTo-PRD-ec8e89b76-6439cfe6", "PRD-c8e89b76adc6-3316-4e6d-a8c2-0227"),
+            auth=(acc["appid"], acc["certid"]),
         )
         return response.json()["access_token"]
 
@@ -160,7 +162,7 @@ class GetItems(object):
                 return None
 
         data = [self.download_data["headers"]]
-        for i,group in enumerate(tools.split_list(numbers, 20)):
+        for i,group in enumerate(tools.split_list(numbers, self.UPLOAD_BATCH_SIZE)):
             items = self.get_items(group)
             if items:
                 data.extend(items)
