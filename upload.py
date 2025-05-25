@@ -284,17 +284,22 @@ class EbayUpload:
         if request["Item"]["ConditionID"] == "1000":    # If item is new no condition description is allowed
             del request["Item"]["ConditionDescription"]
 
-        response = self.connections[site_num].execute("AddFixedPriceItem", request).dict()
-        status = response["Ack"] if ("Ack" in response) else None
+        try:
+            response = self.connections[site_num].execute("AddFixedPriceItem", request).dict()
+            status = response["Ack"] if ("Ack" in response) else None
 
-        if status == "Success":
-            to_return = "Success"
-        elif status in {"Warning", "Failure"}:
-            to_return = f"{status}  ------  {response}"
-        else:
-            to_return = "No Response / Other Error \nLikely An Issue With Ebay Server Or Your Internet Connection\n"
+            if status == "Success":
+                to_return = "Success"
+            elif status in {"Warning", "Failure"}:
+                to_return = f"{status}  ------  {response}"
+            else:
+                to_return = "No Response / Other Error \nLikely An Issue With Ebay Server Or Your Internet Connection\n"
 
-        return f"{site_num}Listing {self.listing_number} Upload To {self.SITE_NAMES[site_num]}:  {to_return}"
+            return f"{site_num}Listing {self.listing_number} Upload To {self.SITE_NAMES[site_num]}:  {to_return}"
+        except ConnectionError as error:
+            if "Duplicate" in str(error):
+                return f"{site_num}Failure - Item is a duplicate"
+        return f"{site_num}Unknown error" 
 
     def upload_items(self, en_listings):
         self.items_thread = threading.Thread(target=self.upload_items_thread, args=(en_listings,))
