@@ -25,10 +25,10 @@
     "jubblyjeans": {
         "name":   "jubblyjeans",
         "credentials": {
-            "appid":  "JamesHug-UploadTo-PRD-ec8e89b76-6439cfe7",
-            "devid":  "01af1c35-eeb7-494b-be16-8ed3e7107551",
-            "certid": "PRD-c8e89b76adc6-3316-4e6d-a8c2-0228",
-            "token":  "v^1.1#i^1#I^3#f^0#p^3#r^1#t^Ul4xMF8zOjI1ODlFNDJCODNDRTBDRDA2Njg5RDBCQzNDNUVGOTg3XzJfMSNFXjI2MA=="
+            "appid":  "JamesHug-UploadTo-PRD-ec8e89b76-6439cfe6",
+            "devid":  "01af1c35-eeb7-494b-be16-8ed3e7107550",
+            "certid": "PRD-c8e89b76adc6-3316-4e6d-a8c2-0227",
+            "token":  "v^1.1#i^1#f^0#r^1#I^3#p^3#t^Ul4xMF80OjlBNjA3NEM4NURDNzQ0MzlENDUxQjQ5QUQwMDA5MjVDXzFfMSNFXjI2MA=="
         },
         "policies": {
             "jeans": {
