@@ -93,7 +93,10 @@ class EbayUpload:
         while True:
             try:
                 response = self.connections[0].execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
-                if response.dict()["Ack"] == "Failure":
+                if "Ack" not in response.dict():
+                    self.display.push_error(response.dict())
+                    return str(pic_id) + "FailurePhotos"
+                elif response.dict()["Ack"] == "Failure":
                     self.display.push_error(response.dict()["Errors"])
                     return str(pic_id) + "FailurePhotos"
             except Exception as error:
