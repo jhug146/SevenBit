@@ -1,4 +1,5 @@
 from ebaysdk.trading import Connection as TradingConnection
+import ebaysdk.exception
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
@@ -296,7 +297,7 @@ class EbayUpload:
                 to_return = "No Response / Other Error \nLikely An Issue With Ebay Server Or Your Internet Connection\n"
 
             return f"{site_num}Listing {self.listing_number} Upload To {self.SITE_NAMES[site_num]}:  {to_return}"
-        except ConnectionError as error:
+        except ebaysdk.exception.ConnectionError as error:
             if "Duplicate" in str(error):
                 return f"{site_num}Failure - Item is a duplicate"
         return f"{site_num}Unknown error" 
