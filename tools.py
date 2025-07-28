@@ -215,7 +215,7 @@ class UI:
             :return: None
             """
             middle = []
-            for i,condition_box in enumerate(condition_boxes):
+            for i, condition_box in enumerate(condition_boxes):
                 self.item_specifics[n][self.CONDITION_HEADERS[i]] = condition_box.get("1.0", "end").strip().strip("\n")
                 middle.append(condition_box.get("1.0", "end").strip().strip("\n"))
 
@@ -253,10 +253,10 @@ class UI:
 
         for i, label in enumerate(titles):
             if label in displayed_details:
-                var_dict[label] = tk.StringVar(value=self.item_specifics[n][titles[i]])
+                var_dict[label] = tk.StringVar(value=self.item_specifics[n][label])
                 tk.Label(self.specifics_frame, font=self.small_font, text=label[3:]).grid(row=i+1, column=0)
                 tk.Entry(self.specifics_frame, textvariable=var_dict[label], font=self.small_font, width=60).grid(row=i+1, column=1)
-
+        
         tk.Button(self.right_frame, text="Save Changes", relief="ridge", font=self.big_font, pady=10, padx=10, command=save_current, bg="#139490", fg="white").place(x=50, y=955)
         tk.Button(self.right_frame, text="Upload Item", relief="ridge", font=self.big_font, pady=10, padx=10, command=single_item_upload, bg="#123da5", fg="white").place(x=500, y=955)
         show_images()
