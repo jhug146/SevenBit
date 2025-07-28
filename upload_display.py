@@ -64,20 +64,20 @@ class UploadDisplay(object):
     def mainloop(self):
         self.ui.window.mainloop()
 
-    def push_error(self, error):
+    def push_error(self, error, sku):
         """
         Adds an error onto the console
         :param error: string
         :return: None
         """
-        message = f" >>  {error}"
+        message = f" >>  {sku} --- {error}"
         if message.strip() == ">>":
             message = " >> Blank error?"
         try:
             tk.Message(self.scroll_frame, width=self.ui.scrw*0.59, text=message, font=self.ui.console_font, bg="black", fg="white", anchor="w").grid(row=self.row_count, column=0)
             self.row_count += 1
         except (tk.TclError, RuntimeError):
-            pass
+            print("Error printing message")
 
     def stop_upload(self):
         """

@@ -73,16 +73,16 @@ class EbayUpload:
                     "password": website_data["password"]
                 }
             )
-            self.display.push_error(response.text)
+            self.display.push_error(response.text, item["SKU"])
             if "Success" in response.text:
                 return "9Success"
             else:
                 return "9Failure"
         except Exception as e:
-            self.display.push_error(e)
+            self.display.push_error(e, item["SKU"])
             return "9Failure"
 
-    def upload_pic(self, path, pic_id):
+    def upload_pic(self, path, pic_id, sku):
         """
         Uploads the picture in the inputted path to the ebay image hosting site and return the url it's hosted at
         :param path: string
@@ -95,20 +95,20 @@ class EbayUpload:
             try:
                 response = self.connections[0].execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
                 if "Ack" not in response.dict():
-                    self.display.push_error(response.dict())
+                    self.display.push_error(response.dict(), sku)
                     return str(pic_id) + "FailurePhotos"
                 elif response.dict()["Ack"] == "Failure":
-                    self.display.push_error(response.dict()["Errors"])
+                    self.display.push_error(response.dict()["Errors"], sku)
                     return str(pic_id) + "FailurePhotos"
             except Exception as error:
-                self.display.push_error(error)
+                self.display.push_error(error, sku)
             else:
                 break
 
         try:
             return str(pic_id) + response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
         except KeyError as key_error:
-            self.display.push_error(key_error)
+            self.display.push_error(key_error, sku)
 
     def website_upload_pics(self, paths, sku, title, no_urls=False):
         website_data = self.item_type.upload_data["website"]["images"]
@@ -155,10 +155,10 @@ class EbayUpload:
                 raise Exception(f"Image upload error - Unable to parse {response.text}")
 
         except Exception as e:
-            self.display.push_error(e)
+            self.display.push_error(e, sku)
             return None
 
-    def make_pic_object(self, paths):
+    def make_pic_object(self, paths, sku):
         """
         Controls the upload of the images in the parameter paths and returns a list of their urls
         :param paths: string
@@ -182,7 +182,7 @@ class EbayUpload:
             urls = []
             for i,path in enumerate(path_list):
                 # Each image is uploaded in its own thread to save time
-                url_response.append(executor.submit(self.upload_pic, path, i))
+                url_response.append(executor.submit(self.upload_pic, path, i, sku))
 
             for ur in as_completed(url_response):
                 result = ur.result()
@@ -334,7 +334,7 @@ class EbayUpload:
             fast_images = self.upload_mode.upload_state[8]
             ebay_images = any(self.upload_mode.upload_state[:6])
             if ebay_images:
-                item_pic_object = self.make_pic_object(item["Path"])
+                item_pic_object = self.make_pic_object(item["Path"], item["SKU"])
                 if not item_pic_object:
                     self.display.set_item_status(self.listing_number - 1, "Failure")
                     continue
@@ -363,10 +363,10 @@ class EbayUpload:
             for reply in final_feedback:
                 if "Failure" in reply:
                     worst_error = "Failure"
-                    self.display.push_error(reply)
+                    self.display.push_error(reply, item["SKU"])
                 elif "Warning" in reply and worst_error != "Failure":
                     worst_error = "Warning"
-                    self.display.push_error(reply)
+                    self.display.push_error(reply, item["SKU"])
                 elif worst_error != "Warning" and worst_error != "Failure":
                     worst_error = "Success"
 
