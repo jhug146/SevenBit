@@ -207,7 +207,7 @@ class UI:
                 if i < 6:
                     place_image(img, 0, i, i)
                 else:
-                    place_image(img, 1, i-6, i)
+                    place_image(img, 1, i - 6, i)
 
         def save_current():
             """
@@ -223,7 +223,7 @@ class UI:
             for detail in var_dict.keys():
                 self.item_specifics[n][detail] = var_dict[detail].get()
 
-            self.refresh_table()
+            self.refresh_table(n)
 
         def single_item_upload():
             self.upload.start_upload(1, self.item_specifics[n]["SKU"])
@@ -248,10 +248,10 @@ class UI:
         for i in range(3):
             con_box = tk.Text(self.til_frame, font=self.small_font, width=73, height=2)
             con_box.insert(1.0, self.item_specifics[n][self.CONDITION_HEADERS[i]])
-            con_box.place(x=0, y=65+(i*40))
+            con_box.place(x=0, y=65 + i * 40)
             condition_boxes.append(con_box)
 
-        for i,label in enumerate(titles):
+        for i, label in enumerate(titles):
             if label in displayed_details:
                 var_dict[label] = tk.StringVar(value=self.item_specifics[n][titles[i]])
                 tk.Label(self.specifics_frame, font=self.small_font, text=label[3:]).grid(row=i+1, column=0)
@@ -261,7 +261,7 @@ class UI:
         tk.Button(self.right_frame, text="Upload Item", relief="ridge", font=self.big_font, pady=10, padx=10, command=single_item_upload, bg="#123da5", fg="white").place(x=500, y=955)
         show_images()
 
-    def refresh_table(self):
+    def refresh_table(self, view_num = 0):
         """
         Refreshs the main table of items
         :return: None
@@ -269,7 +269,7 @@ class UI:
         if hasattr(self, "item_specifics"):
             if type(self.item_specifics) is list:
                 self.show_items()
-                self.view_item(0)
+                self.view_item(view_num)
 
     def show_items(self):
         try:
