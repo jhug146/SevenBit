@@ -3,6 +3,7 @@ Tools file stores the UI class and two useful functions import_file and get_csv_
 """
 import tkinter as tk
 import tkinter.font
+import tkinter.filedialog
 
 from PIL import Image
 from PIL.ImageTk import PhotoImage
