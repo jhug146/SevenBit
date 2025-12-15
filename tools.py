@@ -468,7 +468,7 @@ def chunkstring(string, length):
     return (string[0+i:length+i] for i in range(0, len(string), length))
 
 def update_title(ui, accounts):
-    ui.window.title(f"SevenBit - {accounts.accounts_choice["name"]} - {ui.item_type.upload_data["name"]} - {deleter_status_message()}")
+    ui.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {ui.item_type.upload_data['name']} - {deleter_status_message()}")
 
 def deleter_status_message():
     try:
