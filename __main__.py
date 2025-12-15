@@ -9,7 +9,7 @@ from download import GetItems
 from upload import EbayUpload
 from accounts import Accounts
 from upload_display import UploadDisplay
-from tools import UI, import_file
+from tools import UI, import_file, update_title
 from upload_mode import UploadMode
 
 import multiprocessing
@@ -34,7 +34,8 @@ ui.init_buttons((
     get_items.get_numbers,
     accounts.choose_account,
     item_type.edit,
-    upload_changer.change_mode
+    upload_changer.change_mode,
+    functools.partial(update_title, ui, accounts)
 ))
 
 multiprocessing.freeze_support()   # Fixes issues with threading in the .exe file

@@ -7,20 +7,16 @@ import json
 import tools
 
 class Accounts:
-
     def __init__(self, ui, item_type):
         self.ui = ui
         self.item_type = item_type
         self.account_data = tools.load_json_file("user/accounts.json")
         self.accounts_choice = self.account_data[self.account_data["default"]]
-        self.update_title()
+        tools.update_title(ui, self)
 
     def set_upload_attr(self, upload):
         self.upload = upload
-
-    def update_title(self):
-        self.ui.window.title(f"SevenBit - {self.accounts_choice['name']} - {self.item_type.upload_data['name']}")
-
+        
     def choose(self):
         """
         Chooses the account selected in the choose_account method
@@ -29,7 +25,7 @@ class Accounts:
         try:
             self.accounts_choice = self.account_data[self.account_entry.get()]
             self.dwin.destroy()
-            self.update_title()
+            tools.update_title(self.ui, self.item_type)
             self.upload.update_connections()
         except (ValueError, KeyError):
             tools.display_error(f"The account: {self.account_entry.get()} was not found")

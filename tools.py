@@ -3,18 +3,20 @@ Tools file stores the UI class and two useful functions import_file and get_csv_
 """
 import tkinter as tk
 import tkinter.font
-import tkinter.filedialog
 
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 import win32api
 import csv
 import json
+import requests
 
 from upload_display import ScrollableFrame
 
 
 ITEM_NUMBER_LENGTH = 12
+WEBSITE_URL = "https://www.lovedjeans.co.uk"
+
 
 class UI:
     CONDITION_HEADERS = ("Condition 1", "Condition 2", "Condition 4 (Free Text)")
@@ -22,7 +24,6 @@ class UI:
         self.item_type = item_type
         self.upload_type = 0
         self.window = tk.Tk()
-        self.window.title("SevenBit")
         self.scrw, self.scrh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{int(self.scrw * 0.8)}x{int(self.scrh * 0.8)}")
         self.window.iconphoto(False, PhotoImage(file="images/icon.png"))
@@ -74,7 +75,8 @@ class UI:
             ("#128f89", "Download", 2, 155, 0),
             ("#117f89", "Accounts", 3, 155, 50),
             ("#129691", "Item Type", 4, 305, 0),
-            ("#123f69", "Upload Mode", 5, 305, 50)
+            ("#123f69", "Upload Mode", 5, 305, 50),
+            ("#148920", "Get Status", 6, 455, 0)
         )
         for details in button_details:
             tk.Button(self.options_frame, font=self.big_font, bg=details[0], fg="white", width=10, text=details[1], relief="ridge", command=func_list[details[2]]).place(x=details[3], y=details[4])
@@ -464,3 +466,19 @@ def split_numbers(nums):
     
 def chunkstring(string, length):
     return (string[0+i:length+i] for i in range(0, len(string), length))
+
+def update_title(ui, accounts):
+    ui.window.title(f"SevenBit - {accounts.accounts_choice["name"]} - {ui.item_type.upload_data["name"]} - {deleter_status_message()}")
+
+def deleter_status_message():
+    try:
+        response = requests.post(WEBSITE_URL + "/is_deleter_running/", data = {
+            "username": "image_uploading",
+            "password": "QCVkJ74zKyhWSPm"
+        })
+        if response.text == "True":
+            return "Deleter Is Running"
+        else:
+            return "Deleter Not Running"
+    except Exception as _:
+        return "Deleter Not Running"
