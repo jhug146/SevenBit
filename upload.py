@@ -3,6 +3,7 @@ import threading
 
 import tools
 from destinations import EbayDestination, Destination
+from upload_result import UploadStatus
 
 SKU_LENGTH = 9
 
@@ -95,14 +96,14 @@ class EbayUpload:
             print(final_feedback)
             print("\n\n")
 
-            worst_error = "Success"
+            worst_error = UploadStatus.SUCCESS
             for result in final_feedback:
-                if result.status == "Failure":
-                    worst_error = "Failure"
+                if result.status == UploadStatus.FAILURE:
+                    worst_error = UploadStatus.FAILURE
                     if result.message:
                         self.display.push_error(result.message, item["SKU"])
-                elif result.status == "Warning" and worst_error != "Failure":
-                    worst_error = "Warning"
+                elif result.status == UploadStatus.WARNING and worst_error != UploadStatus.FAILURE:
+                    worst_error = UploadStatus.WARNING
                     if result.message:
                         self.display.push_error(result.message, item["SKU"])
 

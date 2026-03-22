@@ -1,4 +1,5 @@
 import tkinter as tk
+from upload_result import UploadStatus
 
 
 class UploadDisplay(object):
@@ -99,28 +100,28 @@ class UploadDisplay(object):
         :return: None
         """
         for i,label in enumerate(self.status_labels):
-            status = self.status_vars[i].get()
             try:
-                if status == "Success":
+                status = UploadStatus(self.status_vars[i].get())
+                if status == UploadStatus.SUCCESS:
                     label.configure(fg="green")
-                elif status == "Warning":
+                elif status == UploadStatus.WARNING:
                     label.configure(fg="orange")
-                elif status == "Failure":
+                elif status == UploadStatus.FAILURE:
                     label.configure(fg="red")
-                else:
-                    label.configure(fg="black")
+            except ValueError:
+                label.configure(fg="black")
             except tk.TclError:
                 self.stop_upload()
 
-    def set_item_status(self, item_num, status):
+    def set_item_status(self, item_num, status: UploadStatus):
         """
         Updates an item's status, calls the the recolour method and increment the progressbar
         :param item_num: integer
-        :param status: string
+        :param status: UploadStatus
         :return: None
         """
         try:
-            self.status_vars[item_num].set(status)
+            self.status_vars[item_num].set(status.value)
         except RuntimeError:
             self.stop_upload()
         self.recolour()

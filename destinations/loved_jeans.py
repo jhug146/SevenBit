@@ -4,7 +4,7 @@ import requests
 
 import tools
 from destinations.base import Destination
-from upload_result import UploadResult
+from upload_result import UploadResult, UploadStatus
 
 
 class WebsiteDestination(Destination):
@@ -89,7 +89,7 @@ class WebsiteDestination(Destination):
                     "password": website_data["password"]
                 }
             )
-            status = "Success" if "Success" in response.text else "Failure"
+            status = UploadStatus.SUCCESS if "Success" in response.text else UploadStatus.FAILURE
             return UploadResult(status, sort_key=7, message="Website returned: " + response.text)
         except Exception as e:
-            return UploadResult("Failure", sort_key=7, message=str(e))
+            return UploadResult(UploadStatus.FAILURE, sort_key=7, message=str(e))
