@@ -2,31 +2,65 @@ import tkinter as tk
 
 
 class UploadMode:
-    COUNTRIES = ("US", "UK", "AUS", "FRA", "GER", "ITA", "SPA", "To SQL database", "Fast images", "Download images with items")
-    OPTIONS = ("US", "UK", "AUS", "FR", "DE", "IT", "ES", "SQL", "IMG", "DIMG")
+    EBAY_COUNTRIES = ("US", "UK", "AUS", "FRA", "GER", "ITA", "SPA")
+    OPTIONS = ("US", "UK", "AUS", "FR", "DE", "IT", "ES")
+
     def __init__(self, item_type):
         self.item_type = item_type
+        self._website_dests = []
         self.fix_mode()
 
     def fix_mode(self):
-        state = [0] * len(self.OPTIONS)
-        for i,option in enumerate(self.OPTIONS):
-            if option in self.item_type.upload_data["upload_to"]:
-                state[i] = 1
-        self.upload_state = state
+        upload_to = self.item_type.upload_data["upload_to"]
+        self.upload_state = [1 if opt in upload_to else 0 for opt in self.OPTIONS]
+        self.fast_images = "IMG" in upload_to
+        self.download_images = "DIMG" in upload_to
+        self._website_state = {dest.name: (dest.name in upload_to) for dest in self._website_dests}
+
+    def register(self, website_dests):
+        """Call after destinations are created. Builds per-destination toggle state."""
+        self._website_dests = website_dests
+        upload_to = self.item_type.upload_data["upload_to"]
+        self._website_state = {dest.name: (dest.name in upload_to) for dest in website_dests}
+
+    def is_destination_enabled(self, name: str) -> bool:
+        return self._website_state.get(name, False)
 
     def change_mode(self):
         self.win = tk.Tk()
         self.win.title("Change Upload Mode")
         self.win.geometry("250x300")
 
-        self.int_vars = []
-        for i in range(len(self.upload_state)):
-            tk.Label(self.win, text=self.COUNTRIES[i]).grid(row=i, column=0)
-            int_var = tk.IntVar(self.win, value=self.upload_state[i])
-            tk.Checkbutton(self.win, variable=int_var, command=self.change_button).grid(row=i, column=1)
-            self.int_vars.append(int_var)
+        row = 0
+        self._ebay_vars = []
+        for i, country in enumerate(self.EBAY_COUNTRIES):
+            tk.Label(self.win, text=country).grid(row=row, column=0)
+            var = tk.IntVar(self.win, value=self.upload_state[i])
+            tk.Checkbutton(self.win, variable=var, command=self._on_change).grid(row=row, column=1)
+            self._ebay_vars.append(var)
+            row += 1
 
-    def change_button(self):
-        for i,var in enumerate(self.int_vars):
+        self._website_vars = {}
+        for dest in self._website_dests:
+            tk.Label(self.win, text=dest.label).grid(row=row, column=0)
+            var = tk.IntVar(self.win, value=int(self._website_state.get(dest.name, False)))
+            tk.Checkbutton(self.win, variable=var, command=self._on_change).grid(row=row, column=1)
+            self._website_vars[dest.name] = var
+            row += 1
+
+        tk.Label(self.win, text="Fast images").grid(row=row, column=0)
+        self._fast_images_var = tk.IntVar(self.win, value=int(self.fast_images))
+        tk.Checkbutton(self.win, variable=self._fast_images_var, command=self._on_change).grid(row=row, column=1)
+        row += 1
+
+        tk.Label(self.win, text="Download images with items").grid(row=row, column=0)
+        self._download_images_var = tk.IntVar(self.win, value=int(self.download_images))
+        tk.Checkbutton(self.win, variable=self._download_images_var, command=self._on_change).grid(row=row, column=1)
+
+    def _on_change(self):
+        for i, var in enumerate(self._ebay_vars):
             self.upload_state[i] = var.get()
+        for name, var in self._website_vars.items():
+            self._website_state[name] = bool(var.get())
+        self.fast_images = bool(self._fast_images_var.get())
+        self.download_images = bool(self._download_images_var.get())

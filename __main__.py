@@ -11,7 +11,7 @@ from accounts import Accounts
 from upload_display import UploadDisplay
 from tools import UI, import_file, update_title
 from upload_mode import UploadMode
-from destinations import EbayDestination, WebsiteDestination
+from destinations import EbayDestination, WebsiteDestination, Destination
 
 import multiprocessing
 import functools
@@ -28,6 +28,7 @@ destinations = [
     EbayDestination(accounts, item_type, upload_changer),
     WebsiteDestination(item_type),
 ]
+upload_changer.register([d for d in destinations if isinstance(d, Destination)])
 
 ebay_upload = EbayUpload(accounts, ui, translator, UploadDisplay, upload_changer, item_type, destinations)
 accounts.set_upload_attr(ebay_upload)

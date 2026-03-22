@@ -72,7 +72,7 @@ class GetItems(object):
             return None
 
         item_list = response["Item"] if type(response["Item"]) is list else [response["Item"]]
-        download_images = self.upload_mode.upload_state[9]
+        download_images = self.upload_mode.download_images
 
         set_values = self.download_data["set_values"]
         non_is_values = self.download_data["non_is_values"]
@@ -157,7 +157,7 @@ class GetItems(object):
     def search(self, numbers):
         self.download_data = self.item_type.download_data
 
-        if self.upload_mode.upload_state[9]:
+        if self.upload_mode.download_images:
             if not self.make_folder():
                 return None
 

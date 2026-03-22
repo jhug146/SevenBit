@@ -7,7 +7,13 @@ class Destination(ABC):
     @property
     @abstractmethod
     def name(self) -> str:
-        """Short identifier matching the OPTIONS key in UploadMode (e.g. 'SQL')."""
+        """Short identifier used as the toggle key (e.g. 'SQL')."""
+        ...
+
+    @property
+    @abstractmethod
+    def label(self) -> str:
+        """Human-readable display name shown in the UI (e.g. 'Loved Jeans')."""
         ...
 
     @abstractmethod
@@ -17,5 +23,5 @@ class Destination(ABC):
 
     @abstractmethod
     def upload_item(self, item: dict, display) -> str:
-        """Upload item data. Returns a status string prefixed with a sort-key character."""
+        """Upload item data. Returns an UploadResult."""
         ...

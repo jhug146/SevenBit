@@ -18,6 +18,10 @@ class WebsiteDestination(Destination):
     def name(self) -> str:
         return "SQL"
 
+    @property
+    def label(self) -> str:
+        return "Loved Jeans"
+
     def upload_images(self, paths: str, sku: str, title: str, display, no_urls: bool = False) -> list | None:
         website_data = self.item_type.upload_data["website"]["images"]
         URL = self.item_type.upload_data["website"]["url"] + website_data["url"]

@@ -54,11 +54,11 @@ class EbayUpload:
                 upload_countries = self.item_type.upload_data["upload_to"]
                 enabled_website_dests = [
                     dest for dest in self.website_dests
-                    if self.upload_mode.upload_state[self.upload_mode.OPTIONS.index(dest.name)]
+                    if self.upload_mode.is_destination_enabled(dest.name)
                     and dest.name in upload_countries
                 ]
 
-            fast_images = self.upload_mode.upload_state[8]
+            fast_images = self.upload_mode.fast_images
             ebay_images = any(self.upload_mode.upload_state[:6])
 
             if ebay_images:
