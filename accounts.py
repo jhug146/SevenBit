@@ -25,7 +25,7 @@ class Accounts:
         try:
             self.accounts_choice = self.account_data[self.account_entry.get()]
             self.dwin.destroy()
-            tools.update_title(self.ui, self.item_type)
+            tools.update_title(self.ui, self)
             self.upload.update_connections()
         except (ValueError, KeyError):
             tools.display_error(f"The account: {self.account_entry.get()} was not found")

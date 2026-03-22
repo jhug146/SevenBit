@@ -6,6 +6,7 @@ import requests
 import pathlib
 import json
 import threading
+import time
 
 import tools
 
@@ -16,6 +17,7 @@ class EbayUpload:
     SITE_IDS = ("0", "3", "15", "71", "77", "101", "186")
     SITE_NAMES = ("ebay.com", "ebay.co.uk", "ebay.com.au", "ebay.fr", "ebay.de", "ebay.it", "ebay.es")
     SITE_CURRS = ("USD", "GBP", "AUD", "EUR", "EUR", "EUR", "EUR")
+    MAX_RETRIES = 3
 
     def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type):
         self.accounts = accounts
@@ -73,7 +75,7 @@ class EbayUpload:
                     "password": website_data["password"]
                 }
             )
-            self.display.push_error(response.text, item["SKU"])
+            self.display.push_error("Website returned: " + response.text, item["SKU"])
             if "Success" in response.text:
                 return "9Success"
             else:
@@ -91,24 +93,30 @@ class EbayUpload:
         """
         image_data = open(path, "rb").read()  # When opening an image make sure to use read() so that the raw data is always used, this took 5+ hours to figure out!
         files = {"file": ("EbayImage", image_data)}
-        while True:
+        attempts = 0
+        str_pic_id = ("0" + str(pic_id)) if pic_id < 10 else str(pic_id)
+        while attempts < self.MAX_RETRIES:
+            attempts += 1
+            if attempts == self.MAX_RETRIES:
+                self.display.push_error("Exceeded max retries in uploading images to eBay, unsure why, contact James", sku)
+                return str_pic_id + "FailurePhotos"
             try:
-                response = self.connections[0].execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
+                response = self.connections[1].execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
                 if "Ack" not in response.dict():
                     self.display.push_error(response.dict(), sku)
-                    return str(pic_id) + "FailurePhotos"
+                    continue
                 elif response.dict()["Ack"] == "Failure":
                     self.display.push_error(response.dict()["Errors"], sku)
-                    return str(pic_id) + "FailurePhotos"
+                    continue
+                break
             except Exception as error:
                 self.display.push_error(error, sku)
-            else:
-                break
 
         try:
-            return str(pic_id) + response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
+            return str_pic_id + response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
         except KeyError as key_error:
             self.display.push_error(key_error, sku)
+            return str_pic_id + "FailurePhotos"
 
     def website_upload_pics(self, paths, sku, title, no_urls=False):
         website_data = self.item_type.upload_data["website"]["images"]
@@ -183,19 +191,21 @@ class EbayUpload:
             for i,path in enumerate(path_list):
                 # Each image is uploaded in its own thread to save time
                 url_response.append(executor.submit(self.upload_pic, path, i, sku))
+                time.sleep(0.5)
 
             for ur in as_completed(url_response):
                 result = ur.result()
                 if result:
                     urls.append(result)
 
+        print(urls)
         # Image urls are sorted by their first character since the threads can end at different time causing the order to be wrong
         # Their first character is added in the upload_pic function based on which thread it's in
         for url in urls:
             if "FailurePhotos" in url:
                 return None
 
-        urls.sort(key=lambda x: x[:1])
+        urls.sort(key=lambda x: x[:2])
         urls = [u.lstrip("0123456789") for u in urls]
         return urls
 
@@ -292,7 +302,7 @@ class EbayUpload:
             if status == "Success":
                 to_return = "Success"
             elif status in {"Warning", "Failure"}:
-                to_return = f"{status}  ------  {response}"
+                to_return = f"Ebay Upload  ---  {status}  ----  {response}"
             else:
                 to_return = "No Response / Other Error \nLikely An Issue With Ebay Server Or Your Internet Connection\n"
 
@@ -300,7 +310,7 @@ class EbayUpload:
         except ebaysdk.exception.ConnectionError as error:
             if "Duplicate" in str(error):
                 return f"{site_num}Failure - Item is a duplicate"
-        return f"{site_num}Unknown error" 
+            return f"{site_num}Failure - {error}" 
 
     def upload_items(self, en_listings):
         self.items_thread = threading.Thread(target=self.upload_items_thread, args=(en_listings,))
@@ -314,10 +324,11 @@ class EbayUpload:
         self.display = self.UploadDisplay(listings, self.ui, self)
 
         self.length = len(listings)
-        self.listing_number = 1
+        self.listing_number = 0
 
         account_data = self.accounts.accounts_choice
         for item_batch in listings:
+            self.listing_number += 1
             item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
             if self.stop_upload:
                 self.stop_upload = False
@@ -335,6 +346,7 @@ class EbayUpload:
             ebay_images = any(self.upload_mode.upload_state[:6])
             if ebay_images:
                 item_pic_object = self.make_pic_object(item["Path"], item["SKU"])
+                print(item_pic_object)
                 if not item_pic_object:
                     self.display.set_item_status(self.listing_number - 1, "Failure")
                     continue
@@ -342,6 +354,7 @@ class EbayUpload:
                 if fast_images:
                     item_pic_object = self.website_upload_pics(item["Path"], item["SKU"], item["Title"])
                     if not item_pic_object:
+                        self.display.set_item_status(self.listing_number - 1, "Failure")
                         continue
                 else:
                     self.website_upload_pics(item["Path"], item["SKU"], item["Title"])
@@ -356,7 +369,9 @@ class EbayUpload:
                     feedback.append(executor.submit(self.upload_to_database, item))
 
             final_feedback = [fd.result() for fd in feedback]
-            final_feedback.sort(key=lambda x: x[0])
+            print(list(final_feedback))
+            print("\n\n")
+            final_feedback.sort(key=lambda x: x[:1])
             final_feedback = [ff[1:] for ff in final_feedback]
 
             worst_error = "Success"
@@ -372,7 +387,6 @@ class EbayUpload:
 
             self.display.set_item_status(self.listing_number - 1, worst_error)
             self.ui.window.update()
-            self.listing_number += 1
 
         print("Upload complete")
 
