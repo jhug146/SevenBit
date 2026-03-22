@@ -11,6 +11,8 @@ from accounts import Accounts
 from upload_display import UploadDisplay
 from tools import UI, import_file, update_title
 from upload_mode import UploadMode
+from ebay_destination import EbayDestination
+from website_destination import WebsiteDestination
 
 import multiprocessing
 import functools
@@ -22,7 +24,11 @@ item_type.pass_upload(upload_changer)
 ui = UI(item_type)
 accounts = Accounts(ui, item_type)
 translator = EbayTranslator(item_type, upload_changer)
-ebay_upload = EbayUpload(accounts, ui, translator, UploadDisplay, upload_changer, item_type)
+
+ebay_dest = EbayDestination(accounts, item_type, upload_changer)
+website_dests = [WebsiteDestination(item_type)]
+
+ebay_upload = EbayUpload(accounts, ui, translator, UploadDisplay, upload_changer, item_type, ebay_dest, website_dests)
 accounts.set_upload_attr(ebay_upload)
 item_type.set_accounts_attr(accounts)
 ui.set_upload_attr(ebay_upload)

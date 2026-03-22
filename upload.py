@@ -1,318 +1,26 @@
-from ebaysdk.trading import Connection as TradingConnection
-import ebaysdk.exception
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import requests
-import pathlib
-import json
+from concurrent.futures import ThreadPoolExecutor
 import threading
-import time
 
 import tools
 
 SKU_LENGTH = 9
 
-class EbayUpload:
-    SITE_ABBRS = ("US", "UK", "Australia", "France", "Germany", "Italy", "Spain")
-    SITE_IDS = ("0", "3", "15", "71", "77", "101", "186")
-    SITE_NAMES = ("ebay.com", "ebay.co.uk", "ebay.com.au", "ebay.fr", "ebay.de", "ebay.it", "ebay.es")
-    SITE_CURRS = ("USD", "GBP", "AUD", "EUR", "EUR", "EUR", "EUR")
-    MAX_RETRIES = 3
 
-    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type):
+class EbayUpload:
+    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type, ebay_dest, website_dests):
         self.accounts = accounts
         self.item_type = item_type
         self.upload_mode = upload_changer
         self.ui = ui
         self.translator = translator
         self.UploadDisplay = upload_display
+        self.ebay_dest = ebay_dest
+        self.website_dests = website_dests
         self.stop_upload = False
         self.upload_begin = ""
-        self.client = requests.session()
-        self.update_connections()
 
     def update_connections(self):
-        self.connections = []
-        acc = self.accounts.accounts_choice["credentials"]
-
-        for siteID in self.SITE_IDS:
-            self.connections.append(TradingConnection(
-                config_file = None,
-                siteid = siteID,
-                devid = acc["devid"],
-                certid = acc["certid"],
-                token = acc["token"],
-                appid = acc["appid"],
-                domain = "api.ebay.com",
-                debug = False
-            ))
-
-    def upload_to_database(self, item):
-        """
-        Uploads to an sql database
-        :param item: list
-        :return: string
-        """
-        upload_data = self.item_type.upload_data
-        website_data = upload_data["website"]["item"]
-        to_upload = {}
-        order = zip(upload_data["upload_ordering"], upload_data["detail_ordering"])
-        # Loops through the upload_ordering and detail_ordering arrays to map item to a format that the server accepts
-        for key,value in order: 
-            to_upload[value] = item[key]
-            # If specified in the json file, set certain columns to 0 instead of ""
-            if (key in upload_data["blank_to_zero"]) and (tools.is_blank(value)):
-                to_upload[value] = 0
-
-        # No need to store all of image paths, just number of semicolons
-        to_upload["paths"] = ";" * (item["Path"].count(";") - 1)
-        try:
-            response = self.client.post(
-                upload_data["website"]["url"] + website_data["url"],
-                data = {
-                    "item": json.dumps(to_upload),
-                    "username": website_data["username"],
-                    "password": website_data["password"]
-                }
-            )
-            self.display.push_error("Website returned: " + response.text, item["SKU"])
-            if "Success" in response.text:
-                return "9Success"
-            else:
-                return "9Failure"
-        except Exception as e:
-            self.display.push_error(e, item["SKU"])
-            return "9Failure"
-
-    def upload_pic(self, path, pic_id, sku):
-        """
-        Uploads the picture in the inputted path to the ebay image hosting site and return the url it's hosted at
-        :param path: string
-        :param pic_id: integer
-        :return: string
-        """
-        image_data = open(path, "rb").read()  # When opening an image make sure to use read() so that the raw data is always used, this took 5+ hours to figure out!
-        files = {"file": ("EbayImage", image_data)}
-        attempts = 0
-        str_pic_id = ("0" + str(pic_id)) if pic_id < 10 else str(pic_id)
-        while attempts < self.MAX_RETRIES:
-            attempts += 1
-            if attempts == self.MAX_RETRIES:
-                self.display.push_error("Exceeded max retries in uploading images to eBay, unsure why, contact James", sku)
-                return str_pic_id + "FailurePhotos"
-            try:
-                acc = self.accounts.accounts_choice["credentials"]
-                connection = TradingConnection(config_file=None, siteid="3", devid=acc["devid"], certid=acc["certid"], token=acc["token"], appid=acc["appid"], domain="api.ebay.com", debug=False)
-                response = connection.execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
-                if "Ack" not in response.dict():
-                    self.display.push_error(response.dict(), sku)
-                    continue
-                elif response.dict()["Ack"] == "Failure":
-                    self.display.push_error(response.dict()["Errors"], sku)
-                    continue
-                break
-            except Exception as error:
-                self.display.push_error(error, sku)
-
-        try:
-            return str_pic_id + response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
-        except KeyError as key_error:
-            self.display.push_error(key_error, sku)
-            return str_pic_id + "FailurePhotos"
-
-    def website_upload_pics(self, paths, sku, title, no_urls=False):
-        website_data = self.item_type.upload_data["website"]["images"]
-        URL = self.item_type.upload_data["website"]["url"] + website_data["url"]
-
-        path_list = paths.split(";")
-        if path_list[-1] == "":
-            path_list.pop()
-        
-        try:
-            if "http" in path_list[0]:
-                urls = json.dumps(path_list)
-            else:
-                urls = "file"
-
-            data = {
-                "username": website_data["username"],
-                "password": website_data["password"],
-                "sku": sku,
-                "title": title,
-                "urls": urls
-            }
-            if "http" in path_list[0]:
-                response = self.client.post(
-                    URL,
-                    data = data
-                )
-            else:
-                images = {}
-                for i,name in enumerate(path_list):
-                    images[f"file{i}"] = open(pathlib.Path(name), "rb").read()
-                response = self.client.post(
-                    URL,
-                    data = data,
-                    files = images
-                )
-            if no_urls:
-                return response.text[:7]
-
-            urls = json.loads(response.text[27:])   #Cuts off the "Success - Images Uploaded" bit
-            if type(urls) is list:
-                return urls
-            else:
-                raise Exception(f"Image upload error - Unable to parse {response.text}")
-
-        except Exception as e:
-            self.display.push_error(e, sku)
-            return None
-
-    def make_pic_object(self, paths, sku):
-        """
-        Controls the upload of the images in the parameter paths and returns a list of their urls
-        :param paths: string
-        :return: list
-        """
-        path_list = paths.split(";")
-        if path_list[-1] == "":
-            path_list.pop()
-
-        is_urls = True
-        for path in path_list:
-            if not "http" in path:  # If the photos are uploaded there is no need to re-upload
-                is_urls = False
-                break
-
-        if is_urls:
-            return path_list
-
-        url_response = []
-        with ThreadPoolExecutor(max_workers=12) as executor:
-            urls = []
-            for i,path in enumerate(path_list):
-                # Each image is uploaded in its own thread to save time
-                url_response.append(executor.submit(self.upload_pic, path, i, sku))
-                time.sleep(0.5)
-
-            for ur in as_completed(url_response):
-                result = ur.result()
-                if result:
-                    urls.append(result)
-
-        print(urls)
-        # Image urls are sorted by their first character since the threads can end at different time causing the order to be wrong
-        # Their first character is added in the upload_pic function based on which thread it's in
-        for url in urls:
-            if "FailurePhotos" in url:
-                return None
-
-        urls.sort(key=lambda x: x[:2])
-        urls = [u.lstrip("0123456789") for u in urls]
-        return urls
-
-    def send_item(self, site_num, details, pic_object):
-        if len(details) == 1:
-            details = details[0]
-
-        if not self.upload_mode.upload_state[site_num]:    # Use this for uploading to only non UK sites
-            return f"{site_num}Success"
-
-        upload_data = self.item_type.upload_data
-        account_data = self.accounts.accounts_choice
-        policies = account_data["policies"][upload_data["name"]]
-
-        item_specific_list = []
-        for detail in details:
-            prefix, suffix = detail[:3], detail[3:]
-            if prefix == "IS_" and upload_data["translate_headers"]:
-                item_specific_list.append({
-                    "Name": upload_data["is_names"][suffix][site_num],
-                    "Value": details[detail]
-                })
-            elif (prefix == "MU_" or (prefix == "IS_" and not upload_data["translate_headers"])) and details[detail]:
-                item_specific_list.append({
-                    "Name": suffix,
-                    "Value": details[detail]
-                })
-
-        html = details["eBay Description"].replace("&nbsp", "")
-
-        if not policies["payment"][site_num]:
-            return f"{site_num} Failure  -  You haven't specified a payment policy number for all the sites you're attempting to upload to on this account"
-
-        payment_id = policies["payment"][site_num]
-        shipping_id = policies["shipping"][site_num]
-        returns_id = policies["returns"][site_num]
-
-        store_category = account_data.get("default_store_category", details["eBay Store Category1ID"])
-        request = {
-            "Item": {
-                "Title" : details["Title"],
-                "SKU": details["SKU"],
-                "Description": f"<![CDATA[{html}]]>",
-                "ConditionDescription": details["eBay Condition Description"],
-                "Country" : upload_data["user_info"]["country"],
-                "Location": upload_data["user_info"]["country"],
-                "Site" : self.SITE_ABBRS[site_num],
-                "SiteId": self.SITE_IDS[site_num],
-                "Currency": self.SITE_CURRS[site_num],
-                "ConditionID": details["eBay Condition"],
-                "PrimaryCategory": {
-                    "CategoryID": str(details["eBay Category1ID"])
-                },
-                "ListingDuration": "GTC",
-                "StartPrice": str(details["Fixed Price eBay"]),
-                "SellerProfiles": {
-                    "SellerPaymentProfile":  {
-                        "PaymentProfileID":  payment_id
-                    },
-                    "SellerShippingProfile": {
-                        "ShippingProfileID": shipping_id
-                    },
-                    "SellerReturnProfile":   {
-                        "ReturnProfileID":   returns_id
-                    }
-                },
-                "SellerContactDetails": {
-                    "County": upload_data["user_info"]["county"]
-                },
-                "PostalCode": upload_data["user_info"]["postcode"],
-                "Storefront": {
-                    "StoreCategoryID": store_category
-                },
-                "ItemSpecifics": {
-                    "NameValueList": item_specific_list
-                },
-                "ProductListingDetails": {
-                    "EAN": "N/A"
-                },
-                "PictureDetails": {
-                    "PictureURL": pic_object
-                },
-                "DispatchTimeMax": upload_data["user_info"]["max_dispatch_time"]
-            }
-        }
-
-        if request["Item"]["ConditionID"] == "1000":    # If item is new no condition description is allowed
-            del request["Item"]["ConditionDescription"]
-
-        try:
-            response = self.connections[site_num].execute("AddFixedPriceItem", request).dict()
-            status = response["Ack"] if ("Ack" in response) else None
-
-            if status == "Success":
-                to_return = "Success"
-            elif status in {"Warning", "Failure"}:
-                to_return = f"Ebay Upload  ---  {status}  ----  {response}"
-            else:
-                to_return = "No Response / Other Error \nLikely An Issue With Ebay Server Or Your Internet Connection\n"
-
-            return f"{site_num}Listing {self.listing_number} Upload To {self.SITE_NAMES[site_num]}:  {to_return}"
-        except ebaysdk.exception.ConnectionError as error:
-            if "Duplicate" in str(error):
-                return f"{site_num}Failure - Item is a duplicate"
-            return f"{site_num}Failure - {error}" 
+        self.ebay_dest.update_connections()
 
     def upload_items(self, en_listings):
         self.items_thread = threading.Thread(target=self.upload_items_thread, args=(en_listings,))
@@ -339,36 +47,45 @@ class EbayUpload:
 
             if account_data["default_uploads"]:
                 upload_countries = account_data["default_uploads"]
-                website = False
+                enabled_website_dests = []
             else:
                 upload_countries = self.item_type.upload_data["upload_to"]
-                website = self.upload_mode.upload_state[7] and "SQL" in upload_countries
+                enabled_website_dests = [
+                    dest for dest in self.website_dests
+                    if self.upload_mode.upload_state[self.upload_mode.OPTIONS.index(dest.name)]
+                    and dest.name in upload_countries
+                ]
 
             fast_images = self.upload_mode.upload_state[8]
             ebay_images = any(self.upload_mode.upload_state[:6])
+
             if ebay_images:
-                item_pic_object = self.make_pic_object(item["Path"], item["SKU"])
+                item_pic_object = self.ebay_dest.upload_images(item["Path"], item["SKU"], self.display)
                 print(item_pic_object)
                 if not item_pic_object:
                     self.display.set_item_status(self.listing_number - 1, "Failure")
                     continue
-            if website:
+
+            if enabled_website_dests:
                 if fast_images:
-                    item_pic_object = self.website_upload_pics(item["Path"], item["SKU"], item["Title"])
+                    item_pic_object = enabled_website_dests[0].upload_images(item["Path"], item["SKU"], item["Title"], self.display)
                     if not item_pic_object:
                         self.display.set_item_status(self.listing_number - 1, "Failure")
                         continue
                 else:
-                    self.website_upload_pics(item["Path"], item["SKU"], item["Title"])
+                    for dest in enabled_website_dests:
+                        dest.upload_images(item["Path"], item["SKU"], item["Title"], self.display)
 
             feedback = []
             with ThreadPoolExecutor() as executor:
                 if ebay_images:
-                    for site_num,details in enumerate(item_batch):
+                    for site_num, details in enumerate(item_batch):
                         if self.upload_mode.OPTIONS[site_num] in upload_countries and details:
-                            feedback.append(executor.submit(self.send_item, site_num, details, item_pic_object))
-                if website:
-                    feedback.append(executor.submit(self.upload_to_database, item))
+                            feedback.append(executor.submit(
+                                self.ebay_dest.send_item, site_num, details, item_pic_object, self.listing_number, self.display
+                            ))
+                for dest in enabled_website_dests:
+                    feedback.append(executor.submit(dest.upload_item, item, self.display))
 
             final_feedback = [fd.result() for fd in feedback]
             print(list(final_feedback))
@@ -405,7 +122,7 @@ class EbayUpload:
             return None
 
         requirements = self.item_type.upload_data["upload_requirements"]
-        for i,item in enumerate(self.ui.item_specifics):
+        for i, item in enumerate(self.ui.item_specifics):
             is_title_short = (len(item["Title"]) > requirements["max_title_length"])
             is_price_over = (float(item["Fixed Price eBay"]) > requirements["max_price"])
             is_price_under = (float(item["Fixed Price eBay"]) < requirements["min_price"])
@@ -441,16 +158,16 @@ class EbayUpload:
         elif upload_type == 2:
             start_point = None
             end_point = None
-            for i,item in enumerate(self.ui.item_specifics):
+            for i, item in enumerate(self.ui.item_specifics):
                 if item["SKU"].upper() in info.upper():
                     start_point = i
                 if extra_info and item["SKU"].upper() in extra_info.upper():
                     end_point = i
-            
+
             if not start_point:
                 tools.display_error("The start SKU was not found")
                 return None
-            
+
             if extra_info and not end_point:
                 tools.display_error("The end SKU was not found")
                 return None
@@ -459,4 +176,3 @@ class EbayUpload:
                 self.upload_items(self.ui.item_specifics[start_point : end_point + 1])
             else:
                 self.upload_items(self.ui.item_specifics[start_point:])
-
