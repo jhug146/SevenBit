@@ -3,13 +3,12 @@ import pathlib
 import requests
 
 import tools
-from destination import Destination
+from destinations.base import Destination
+from upload_result import UploadResult
 
 
 class WebsiteDestination(Destination):
     """Handles image and item uploads to a custom website (e.g. lovedjeans.co.uk)."""
-
-    SORT_KEY = "9"  # Prefix for status string ordering — must sort after eBay site indices (0-6)
 
     def __init__(self, item_type):
         self.item_type = item_type
@@ -90,11 +89,7 @@ class WebsiteDestination(Destination):
                     "password": website_data["password"]
                 }
             )
-            display.push_error("Website returned: " + response.text, item["SKU"])
-            if "Success" in response.text:
-                return self.SORT_KEY + "Success"
-            else:
-                return self.SORT_KEY + "Failure"
+            status = "Success" if "Success" in response.text else "Failure"
+            return UploadResult(status, sort_key=7, message="Website returned: " + response.text)
         except Exception as e:
-            display.push_error(e, item["SKU"])
-            return self.SORT_KEY + "Failure"
+            return UploadResult("Failure", sort_key=7, message=str(e))

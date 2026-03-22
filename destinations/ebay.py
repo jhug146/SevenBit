@@ -4,6 +4,8 @@ import ebaysdk.exception
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
+from upload_result import UploadResult
+
 
 class EbayDestination:
     """Handles all eBay image hosting and per-region item uploads."""
@@ -106,7 +108,7 @@ class EbayDestination:
             details = details[0]
 
         if not self.upload_mode.upload_state[site_num]:    # Use this for uploading to only non UK sites
-            return f"{site_num}Success"
+            return UploadResult("Success", sort_key=site_num)
 
         upload_data = self.item_type.upload_data
         account_data = self.accounts.accounts_choice
@@ -129,7 +131,7 @@ class EbayDestination:
         html = details["eBay Description"].replace("&nbsp", "")
 
         if not policies["payment"][site_num]:
-            return f"{site_num} Failure  -  You haven't specified a payment policy number for all the sites you're attempting to upload to on this account"
+            return UploadResult("Failure", sort_key=site_num, message="You haven't specified a payment policy number for all the sites you're attempting to upload to on this account")
 
         payment_id = policies["payment"][site_num]
         shipping_id = policies["shipping"][site_num]
@@ -187,19 +189,18 @@ class EbayDestination:
         if request["Item"]["ConditionID"] == "1000":    # If item is new no condition description is allowed
             del request["Item"]["ConditionDescription"]
 
+        site_label = f"Listing {listing_number} Upload To {self.SITE_NAMES[site_num]}"
         try:
             response = self.connections[site_num].execute("AddFixedPriceItem", request).dict()
-            status = response["Ack"] if ("Ack" in response) else None
+            ebay_status = response["Ack"] if ("Ack" in response) else None
 
-            if status == "Success":
-                to_return = "Success"
-            elif status in {"Warning", "Failure"}:
-                to_return = f"Ebay Upload  ---  {status}  ----  {response}"
+            if ebay_status == "Success":
+                return UploadResult("Success", sort_key=site_num, message=f"{site_label}: Success")
+            elif ebay_status in {"Warning", "Failure"}:
+                return UploadResult(ebay_status, sort_key=site_num, message=f"{site_label}: Ebay Upload  ---  {ebay_status}  ----  {response}")
             else:
-                to_return = "No Response / Other Error \nLikely An Issue With Ebay Server Or Your Internet Connection\n"
-
-            return f"{site_num}Listing {listing_number} Upload To {self.SITE_NAMES[site_num]}:  {to_return}"
+                return UploadResult("Failure", sort_key=site_num, message=f"{site_label}: No Response / Other Error\nLikely An Issue With Ebay Server Or Your Internet Connection\n")
         except ebaysdk.exception.ConnectionError as error:
             if "Duplicate" in str(error):
-                return f"{site_num}Failure - Item is a duplicate"
-            return f"{site_num}Failure - {error}"
+                return UploadResult("Failure", sort_key=site_num, message="Item is a duplicate")
+            return UploadResult("Failure", sort_key=site_num, message=str(error))

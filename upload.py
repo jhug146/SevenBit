@@ -2,20 +2,21 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 
 import tools
+from destinations import EbayDestination, Destination
 
 SKU_LENGTH = 9
 
 
 class EbayUpload:
-    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type, ebay_dest, website_dests):
+    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type, destinations):
         self.accounts = accounts
         self.item_type = item_type
         self.upload_mode = upload_changer
         self.ui = ui
         self.translator = translator
         self.UploadDisplay = upload_display
-        self.ebay_dest = ebay_dest
-        self.website_dests = website_dests
+        self.ebay_dest = next(d for d in destinations if isinstance(d, EbayDestination))
+        self.website_dests = [d for d in destinations if isinstance(d, Destination)]
         self.stop_upload = False
         self.upload_begin = ""
 
@@ -87,22 +88,23 @@ class EbayUpload:
                 for dest in enabled_website_dests:
                     feedback.append(executor.submit(dest.upload_item, item, self.display))
 
-            final_feedback = [fd.result() for fd in feedback]
-            print(list(final_feedback))
+            final_feedback = sorted(
+                [fd.result() for fd in feedback],
+                key=lambda r: r.sort_key
+            )
+            print(final_feedback)
             print("\n\n")
-            final_feedback.sort(key=lambda x: x[:1])
-            final_feedback = [ff[1:] for ff in final_feedback]
 
             worst_error = "Success"
-            for reply in final_feedback:
-                if "Failure" in reply:
+            for result in final_feedback:
+                if result.status == "Failure":
                     worst_error = "Failure"
-                    self.display.push_error(reply, item["SKU"])
-                elif "Warning" in reply and worst_error != "Failure":
+                    if result.message:
+                        self.display.push_error(result.message, item["SKU"])
+                elif result.status == "Warning" and worst_error != "Failure":
                     worst_error = "Warning"
-                    self.display.push_error(reply, item["SKU"])
-                elif worst_error != "Warning" and worst_error != "Failure":
-                    worst_error = "Success"
+                    if result.message:
+                        self.display.push_error(result.message, item["SKU"])
 
             self.display.set_item_status(self.listing_number - 1, worst_error)
             self.ui.window.update()
