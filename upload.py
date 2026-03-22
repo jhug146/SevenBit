@@ -101,7 +101,9 @@ class EbayUpload:
                 self.display.push_error("Exceeded max retries in uploading images to eBay, unsure why, contact James", sku)
                 return str_pic_id + "FailurePhotos"
             try:
-                response = self.connections[1].execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
+                acc = self.accounts.accounts_choice["credentials"]
+                connection = TradingConnection(config_file=None, siteid="3", devid=acc["devid"], certid=acc["certid"], token=acc["token"], appid=acc["appid"], domain="api.ebay.com", debug=False)
+                response = connection.execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
                 if "Ack" not in response.dict():
                     self.display.push_error(response.dict(), sku)
                     continue
