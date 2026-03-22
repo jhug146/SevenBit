@@ -4,7 +4,7 @@ import ebaysdk.exception
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-from upload_result import UploadResult
+from upload_result import UploadResult, ImageUploadResult
 
 
 class EbayDestination:
@@ -52,37 +52,30 @@ class EbayDestination:
         if is_urls:
             return path_list
 
-        url_response = []
+        futures = []
         with ThreadPoolExecutor(max_workers=12) as executor:
-            urls = []
             for i, path in enumerate(path_list):
-                url_response.append(executor.submit(self._upload_pic, path, i, sku, display))
+                futures.append(executor.submit(self._upload_pic, path, i, sku, display))
                 time.sleep(0.5)
 
-            for ur in as_completed(url_response):
-                result = ur.result()
-                if result:
-                    urls.append(result)
+        pic_results = [f.result() for f in as_completed(futures)]
+        print(pic_results)
 
-        print(urls)
-        for url in urls:
-            if "FailurePhotos" in url:
-                return None
+        if any(not r.success for r in pic_results):
+            return None
 
-        urls.sort(key=lambda x: x[:2])
-        urls = [u.lstrip("0123456789") for u in urls]
-        return urls
+        pic_results.sort(key=lambda r: r.pic_id)
+        return [r.url for r in pic_results]
 
-    def _upload_pic(self, path, pic_id, sku, display):
+    def _upload_pic(self, path, pic_id, sku, display) -> ImageUploadResult:
         image_data = open(path, "rb").read()
         files = {"file": ("EbayImage", image_data)}
         attempts = 0
-        str_pic_id = ("0" + str(pic_id)) if pic_id < 10 else str(pic_id)
         while attempts < self.MAX_RETRIES:
             attempts += 1
             if attempts == self.MAX_RETRIES:
                 display.push_error("Exceeded max retries in uploading images to eBay, unsure why, contact James", sku)
-                return str_pic_id + "FailurePhotos"
+                return ImageUploadResult(False, pic_id)
             try:
                 acc = self.accounts.accounts_choice["credentials"]
                 connection = TradingConnection(config_file=None, siteid="3", devid=acc["devid"], certid=acc["certid"], token=acc["token"], appid=acc["appid"], domain="api.ebay.com", debug=False)
@@ -98,10 +91,11 @@ class EbayDestination:
                 display.push_error(error, sku)
 
         try:
-            return str_pic_id + response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
+            url = response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
+            return ImageUploadResult(True, pic_id, url)
         except KeyError as key_error:
             display.push_error(key_error, sku)
-            return str_pic_id + "FailurePhotos"
+            return ImageUploadResult(False, pic_id)
 
     def send_item(self, site_num, details, pic_object, listing_number, display):
         if len(details) == 1:
