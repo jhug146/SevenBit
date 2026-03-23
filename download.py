@@ -115,7 +115,7 @@ class GetItems(object):
                         row[new] = list(row[new])[0]
                 except TypeError:
                     row[new] = ""
-            row[category_column] = f'{gender}s::Waist {waist}"::Leg {length}"'
+            row[category_column] = f'{row[gender]}s::Waist {row[waist]}"::Leg {row[length]}"'
 
             row = [tools.none_to_str(detail) for detail in row]
             items.append(row)

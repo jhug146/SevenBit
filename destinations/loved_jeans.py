@@ -68,7 +68,8 @@ class WebsiteDestination(Destination):
             else:
                 images = {}
                 for i, name in enumerate(path_list):
-                    images[f"file{i}"] = open(pathlib.Path(name), "rb").read()
+                    with open(pathlib.Path(name), "rb") as f:
+                        images[f"file{i}"] = f.read()
                 response = self.client.post(URL, data=data, files=images)
 
             if no_urls:

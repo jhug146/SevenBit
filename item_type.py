@@ -20,7 +20,7 @@ class ItemType:
         self.download_data = tools.load_json_file("user/download.json")
 
         if hasattr(self, "accounts"):
-            self.accounts.update_title()
+            tools.update_title(self.accounts.ui, self.accounts)
 
     def pass_upload(self, upload_mode):
         self.upload_mode = upload_mode

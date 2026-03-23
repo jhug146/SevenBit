@@ -72,7 +72,7 @@ class EbayUpload:
             for dest in enabled_dests:
                 images = dest.upload_images(item["Path"], item["SKU"], item["Title"], self.display)
                 print(images)
-                if images is None and dest.fail_on_image_error:
+                if images is None and (dest.fail_on_image_error or self.upload_mode.fast_images):
                     self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
                     upload_failed = True
                     break
@@ -168,7 +168,7 @@ class EbayUpload:
                 if extra_info and item["SKU"].upper() in extra_info.upper():
                     end_point = i
 
-            if not start_point:
+            if start_point is None:
                 tools.display_error("The start SKU was not found")
                 return None
 

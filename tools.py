@@ -469,13 +469,14 @@ def chunkstring(string, length):
     return (string[0+i:length+i] for i in range(0, len(string), length))
 
 def update_title(ui, accounts):
-    ui.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {ui.item_type.upload_data['name']} - {deleter_status_message()}")
+    ui.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {ui.item_type.upload_data['name']} - {deleter_status_message(ui.item_type)}")
 
-def deleter_status_message():
+def deleter_status_message(item_type):
     try:
-        response = requests.post(WEBSITE_URL + "/is_deleter_running/", data = {
-            "username": "image_uploading",
-            "password": "QCVkJ74zKyhWSPm"
+        website_data = item_type.upload_data["website"]["item"]
+        response = requests.post(WEBSITE_URL + "/is_deleter_running/", data={
+            "username": website_data["username"],
+            "password": website_data["password"]
         })
         if response.text == "True":
             return "Deleter Is Running"

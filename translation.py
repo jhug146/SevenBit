@@ -48,7 +48,7 @@ class EbayTranslator:
         translated_items = []
         item_count = 0
     
-        website_upload = self.upload_mode.upload_state[7]
+        website_upload = self.upload_mode.is_destination_enabled("SQL")
         general_translation_data = self.item_type.translation_data
         no_long_text_translation = general_translation_data.get("no_long_text_translation")
 

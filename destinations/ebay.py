@@ -67,14 +67,12 @@ class EbayImageStore:
         return [r.url for r in pic_results]
 
     def _upload_pic(self, path, pic_id, sku, display) -> ImageUploadResult:
-        image_data = open(path, "rb").read()
+        with open(path, "rb") as f:
+            image_data = f.read()
         files = {"file": ("EbayImage", image_data)}
         attempts = 0
         while attempts < self.MAX_RETRIES:
             attempts += 1
-            if attempts == self.MAX_RETRIES:
-                display.push_error("Exceeded max retries in uploading images to eBay, unsure why, contact James", sku)
-                return ImageUploadResult(UploadStatus.FAILURE, pic_id)
             try:
                 acc = self.accounts.accounts_choice["credentials"]
                 connection = TradingConnection(config_file=None, siteid="3", devid=acc["devid"], certid=acc["certid"], token=acc["token"], appid=acc["appid"], domain="api.ebay.com", debug=False)
@@ -88,6 +86,9 @@ class EbayImageStore:
                 break
             except Exception as error:
                 display.push_error(error, sku)
+        else:
+            display.push_error("Exceeded max retries in uploading images to eBay, unsure why, contact James", sku)
+            return ImageUploadResult(UploadStatus.FAILURE, pic_id)
 
         try:
             url = response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
@@ -172,7 +173,7 @@ class EbaySiteDestination(Destination):
                     "Value": details[detail]
                 })
 
-        html = details["eBay Description"].replace("&nbsp", "")
+        html = details["eBay Description"].replace("&nbsp;", "")
 
         if not policies["payment"][self.site_num]:
             return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message="You haven't specified a payment policy number for all the sites you're attempting to upload to on this account")
