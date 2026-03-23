@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 
 import tools
-from destinations import EbayDestination, Destination
 from upload_result import UploadStatus
 
 SKU_LENGTH = 9
@@ -16,13 +15,13 @@ class EbayUpload:
         self.ui = ui
         self.translator = translator
         self.UploadDisplay = upload_display
-        self.ebay_dest = next(d for d in destinations if isinstance(d, EbayDestination))
-        self.website_dests = [d for d in destinations if isinstance(d, Destination)]
+        self.all_dests = destinations
         self.stop_upload = False
         self.upload_begin = ""
 
     def update_connections(self):
-        self.ebay_dest.update_connections()
+        for dest in self.all_dests:
+            dest.update_connection()
 
     def upload_items(self, en_listings):
         self.items_thread = threading.Thread(target=self.upload_items_thread, args=(en_listings,))
@@ -49,45 +48,47 @@ class EbayUpload:
 
             if account_data["default_uploads"]:
                 upload_countries = account_data["default_uploads"]
-                enabled_website_dests = []
             else:
                 upload_countries = self.item_type.upload_data["upload_to"]
-                enabled_website_dests = [
-                    dest for dest in self.website_dests
-                    if self.upload_mode.is_destination_enabled(dest.name)
-                    and dest.name in upload_countries
-                ]
 
-            fast_images = self.upload_mode.fast_images
-            ebay_images = any(self.upload_mode.upload_state[:6])
+            enabled_dests = [
+                d for d in self.all_dests
+                if d.name in upload_countries
+                and self.upload_mode.is_destination_enabled(d.name)
+                and d.has_data(item_batch)
+            ]
 
-            if ebay_images:
-                item_pic_object = self.ebay_dest.upload_images(item["Path"], item["SKU"], self.display)
-                print(item_pic_object)
-                if not item_pic_object:
-                    self.display.set_item_status(self.listing_number - 1, "Failure")
-                    continue
+            # Reset image caches so each item gets a fresh upload
+            for dest in self.all_dests:
+                dest.clear_image_cache(item["SKU"])
 
-            if enabled_website_dests:
-                if fast_images:
-                    item_pic_object = enabled_website_dests[0].upload_images(item["Path"], item["SKU"], item["Title"], self.display)
-                    if not item_pic_object:
-                        self.display.set_item_status(self.listing_number - 1, "Failure")
-                        continue
-                else:
-                    for dest in enabled_website_dests:
-                        dest.upload_images(item["Path"], item["SKU"], item["Title"], self.display)
+            # Phase 1: upload images for each enabled destination sequentially.
+            # EbaySiteDestinations all share one EbayImageStore, so only the first
+            # one triggers a real upload — the rest return the cached result instantly.
+            # WebsiteDestination also caches, so it uploads at most once even if
+            # called by both the EbayImageStore (fast_images mode) and directly here.
+            image_results = {}
+            upload_failed = False
+            for dest in enabled_dests:
+                images = dest.upload_images(item["Path"], item["SKU"], item["Title"], self.display)
+                print(images)
+                if images is None and dest.fail_on_image_error:
+                    self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
+                    upload_failed = True
+                    break
+                image_results[dest] = images
 
+            if upload_failed:
+                continue
+
+            # Phase 2: upload items in parallel, each destination receiving the
+            # image URLs that its own upload_images call returned.
             feedback = []
             with ThreadPoolExecutor() as executor:
-                if ebay_images:
-                    for site_num, details in enumerate(item_batch):
-                        if self.upload_mode.OPTIONS[site_num] in upload_countries and details:
-                            feedback.append(executor.submit(
-                                self.ebay_dest.send_item, site_num, details, item_pic_object, self.listing_number, self.display
-                            ))
-                for dest in enabled_website_dests:
-                    feedback.append(executor.submit(dest.upload_item, item, self.display))
+                for dest in enabled_dests:
+                    feedback.append(executor.submit(
+                        dest.upload_item, item_batch, image_results[dest], self.listing_number, self.display
+                    ))
 
             final_feedback = sorted(
                 [fd.result() for fd in feedback],

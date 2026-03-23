@@ -3,6 +3,7 @@ import pathlib
 import requests
 
 import tools
+from image_store import ImageStore
 from destinations.base import Destination
 from upload_result import UploadResult, UploadStatus
 
@@ -13,6 +14,7 @@ class WebsiteDestination(Destination):
     def __init__(self, item_type):
         self.item_type = item_type
         self.client = requests.session()
+        self._image_store = ImageStore()
 
     @property
     def name(self) -> str:
@@ -22,7 +24,25 @@ class WebsiteDestination(Destination):
     def label(self) -> str:
         return "Loved Jeans"
 
+    @property
+    def fail_on_image_error(self) -> bool:
+        # A website image failure is reported in the display but does not abort the
+        # item — the item upload continues. eBay fast_images mode still works
+        # correctly because the EbayImageStore calls this method directly and will
+        # propagate the None to the EbaySiteDestination, which does fail on None.
+        return False
+
+    def clear_image_cache(self, sku: str):
+        self._image_store.clear(sku)
+
     def upload_images(self, paths: str, sku: str, title: str, display, no_urls: bool = False) -> list | None:
+        # no_urls=True is a special caller-side flag that changes the return type.
+        # Bypass the cache so a no_urls call never pollutes the cached list result.
+        if no_urls:
+            return self._do_upload_images(paths, sku, title, display, no_urls=True)
+        return self._image_store.get(sku, self._do_upload_images, paths, sku, title, display)
+
+    def _do_upload_images(self, paths: str, sku: str, title: str, display, no_urls: bool = False) -> list | None:
         website_data = self.item_type.upload_data["website"]["images"]
         URL = self.item_type.upload_data["website"]["url"] + website_data["url"]
 
@@ -44,23 +64,17 @@ class WebsiteDestination(Destination):
                 "urls": urls
             }
             if "http" in path_list[0]:
-                response = self.client.post(
-                    URL,
-                    data = data
-                )
+                response = self.client.post(URL, data=data)
             else:
                 images = {}
                 for i, name in enumerate(path_list):
                     images[f"file{i}"] = open(pathlib.Path(name), "rb").read()
-                response = self.client.post(
-                    URL,
-                    data = data,
-                    files = images
-                )
+                response = self.client.post(URL, data=data, files=images)
+
             if no_urls:
                 return response.text[:7]
 
-            urls = json.loads(response.text[27:])   #Cuts off the "Success - Images Uploaded" bit
+            urls = json.loads(response.text[27:])   # cuts off the "Success - Images Uploaded" bit
             if type(urls) is list:
                 return urls
             else:
@@ -70,24 +84,22 @@ class WebsiteDestination(Destination):
             display.push_error(e, sku)
             return None
 
-    def upload_item(self, item: dict, display) -> str:
+    def upload_item(self, item_batch: list, images, listing_number: int, display) -> UploadResult:
+        item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
         upload_data = self.item_type.upload_data
         website_data = upload_data["website"]["item"]
         to_upload = {}
         order = zip(upload_data["upload_ordering"], upload_data["detail_ordering"])
-        # Loops through the upload_ordering and detail_ordering arrays to map item to a format that the server accepts
         for key, value in order:
             to_upload[value] = item[key]
-            # If specified in the json file, set certain columns to 0 instead of ""
             if (key in upload_data["blank_to_zero"]) and (tools.is_blank(value)):
                 to_upload[value] = 0
 
-        # No need to store all of image paths, just number of semicolons
         to_upload["paths"] = ";" * (item["Path"].count(";") - 1)
         try:
             response = self.client.post(
                 upload_data["website"]["url"] + website_data["url"],
-                data = {
+                data={
                     "item": json.dumps(to_upload),
                     "username": website_data["username"],
                     "password": website_data["password"]
