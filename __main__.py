@@ -49,7 +49,14 @@ ebay_image_store.set_fast_source(website_dest.upload_images)
 
 upload_changer.register(destinations)
 
-ebay_upload = EbayUpload(accounts, ui, translator, UploadDisplay, upload_changer, item_type, destinations, item_list)
+display_factory = lambda listings, upload: UploadDisplay(listings, ui, upload)
+
+ebay_upload = EbayUpload(
+    accounts, translator, display_factory, upload_changer, item_type, destinations, item_list,
+    on_validation_error=ui.outline_item,
+    on_request_options=ui.get_options,
+    on_tick=ui.window.update,
+)
 accounts.set_upload_attr(ebay_upload)
 item_type.set_accounts_attr(accounts)
 ui.set_upload_attr(ebay_upload)

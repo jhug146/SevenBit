@@ -9,17 +9,20 @@ SKU_LENGTH = 9
 
 
 class EbayUpload:
-    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type, destinations, item_list):
+    def __init__(self, accounts, translator, display_factory, upload_changer, item_type, destinations, item_list,
+                 on_validation_error, on_request_options, on_tick):
         self.accounts = accounts
         self.item_type = item_type
         self.upload_mode = upload_changer
-        self.ui = ui
         self.item_list = item_list
         self.translator = translator
-        self.UploadDisplay = upload_display
+        self.display_factory = display_factory
         self.all_dests = destinations
         self.stop_upload = False
         self.upload_begin = ""
+        self.on_validation_error = on_validation_error
+        self.on_request_options = on_request_options
+        self.on_tick = on_tick
 
     def update_connections(self):
         for dest in self.all_dests:
@@ -34,7 +37,7 @@ class EbayUpload:
         listings = self.translator.translate(en_listings)
 
         print("Uploading...")
-        self.display = self.UploadDisplay(listings, self.ui, self)
+        self.display = self.display_factory(listings, self)
 
         self.length = len(listings)
         self.listing_number = 0
@@ -111,7 +114,7 @@ class EbayUpload:
                         self.display.push_error(result.message, item["SKU"])
 
             self.display.set_item_status(self.listing_number - 1, worst_error)
-            self.ui.window.update()
+            self.on_tick()
 
         print("Upload complete")
 
@@ -135,9 +138,9 @@ class EbayUpload:
                 errors = True
 
         if errors:
-            self.ui.outline_item(line_nums, True)
+            self.on_validation_error(line_nums, True)
         else:
-            self.ui.get_options(self, self.upload_begin)
+            self.on_request_options(self, self.upload_begin)
 
     def start_upload(self, upload_type, info, extra_info=None):
         # Normal upload
