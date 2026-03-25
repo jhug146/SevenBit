@@ -5,6 +5,7 @@ import tkinter as tk
 import json
 
 import tools
+from ui.utils import display_error
 
 class Accounts:
     def __init__(self, ui, item_type):
@@ -12,7 +13,7 @@ class Accounts:
         self.item_type = item_type
         self.account_data = tools.load_json_file("user/accounts.json")
         self.accounts_choice = self.account_data[self.account_data["default"]]
-        tools.update_title(ui, self)
+        ui.update_title(self)
 
     def set_upload_attr(self, upload):
         self.upload = upload
@@ -25,10 +26,10 @@ class Accounts:
         try:
             self.accounts_choice = self.account_data[self.account_entry.get()]
             self.dwin.destroy()
-            tools.update_title(self.ui, self)
+            self.ui.update_title(self)
             self.upload.update_connections()
         except (ValueError, KeyError):
-            tools.display_error(f"The account: {self.account_entry.get()} was not found")
+            display_error(f"The account: {self.account_entry.get()} was not found")
 
     def choose_account(self):
         """

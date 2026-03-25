@@ -9,9 +9,11 @@ from download import GetItems
 from upload import EbayUpload
 from accounts import Accounts
 from upload_display import UploadDisplay
-from tools import UI, import_file, update_title
+from ui.main_window import UI
+from ui.utils import import_file
 from upload_mode import UploadMode
 from destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination
+from item_list import ItemList
 
 import multiprocessing
 import functools
@@ -20,7 +22,8 @@ import functools
 item_type = ItemType()
 upload_changer = UploadMode(item_type)
 item_type.pass_upload(upload_changer)
-ui = UI(item_type)
+item_list = ItemList()
+ui = UI(item_type, item_list)
 accounts = Accounts(ui, item_type)
 translator = EbayTranslator(item_type, upload_changer)
 
@@ -46,7 +49,7 @@ ebay_image_store.set_fast_source(website_dest.upload_images)
 
 upload_changer.register(destinations)
 
-ebay_upload = EbayUpload(accounts, ui, translator, UploadDisplay, upload_changer, item_type, destinations)
+ebay_upload = EbayUpload(accounts, ui, translator, UploadDisplay, upload_changer, item_type, destinations, item_list)
 accounts.set_upload_attr(ebay_upload)
 item_type.set_accounts_attr(accounts)
 ui.set_upload_attr(ebay_upload)
@@ -59,7 +62,7 @@ ui.init_buttons((
     accounts.choose_account,
     item_type.edit,
     upload_changer.change_mode,
-    functools.partial(update_title, ui, accounts)
+    functools.partial(ui.update_title, accounts)
 ))
 
 multiprocessing.freeze_support()   # Fixes issues with threading in the .exe file

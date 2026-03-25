@@ -7,6 +7,7 @@ import os
 import tools
 import json
 import requests
+from ui.utils import display_error
 
 
 class GetItems(object):
@@ -67,7 +68,7 @@ class GetItems(object):
         print(response)
         if "Item" not in response:
             error = "One or more of the entered item ids were invalid" if response["Errors"]["ShortMessage"] == "Invalid item ID." else json.dumps(response["Errors"])
-            tools.display_error(error)
+            display_error(error)
             return None
 
         item_list = response["Item"] if type(response["Item"]) is list else [response["Item"]]
@@ -128,7 +129,7 @@ class GetItems(object):
 
         if not numbers:
             self.close_window()
-            tools.display_error("Invalid numbers entered")
+            display_error("Invalid numbers entered")
             return None
 
         numbers = [number.replace(" ", "") for number in numbers]
@@ -143,7 +144,7 @@ class GetItems(object):
         try:
             os.mkdir(self.folder)
         except FileNotFoundError:
-            tools.display_error(f"Save location not found {self.folder} please check your accounts.csv file")
+            display_error(f"Save location not found {self.folder} please check your accounts.csv file")
             return None
         return self.folder
 
@@ -165,7 +166,7 @@ class GetItems(object):
             tools.write_csv(save_file, data)
             os.system(f"start excel.exe {save_file}")
         except PermissionError:
-            tools.display_error("Please close the ebay-import.csv file before attempting to download into it")
+            display_error("Please close the ebay-import.csv file before attempting to download into it")
 
     def get_images(self, urls):
         """

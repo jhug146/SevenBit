@@ -87,7 +87,7 @@ class UploadDisplay(object):
         """
         self.upload.set_upload(True)  # This causes the upload to stop
         self.win.destroy()
-        self.upload.upload_begin = self.ui.item_specifics[self.upload.listing_number]["SKU"]
+        self.upload.upload_begin = self.ui.item_list.items[self.upload.listing_number]["SKU"]
         del self
 
     def recolour(self):

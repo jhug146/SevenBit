@@ -3,16 +3,18 @@ import threading
 
 import tools
 from upload_result import UploadStatus
+from ui.utils import display_error
 
 SKU_LENGTH = 9
 
 
 class EbayUpload:
-    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type, destinations):
+    def __init__(self, accounts, ui, translator, upload_display, upload_changer, item_type, destinations, item_list):
         self.accounts = accounts
         self.item_type = item_type
         self.upload_mode = upload_changer
         self.ui = ui
+        self.item_list = item_list
         self.translator = translator
         self.UploadDisplay = upload_display
         self.all_dests = destinations
@@ -43,7 +45,7 @@ class EbayUpload:
             item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
             if self.stop_upload:
                 self.stop_upload = False
-                tools.display_error(f"Upload stopped on this SKU: {item['SKU']}")
+                display_error(f"Upload stopped on this SKU: {item['SKU']}")
                 break
 
             if account_data["default_uploads"]:
@@ -119,14 +121,11 @@ class EbayUpload:
     def confirm_upload(self):
         errors = False
         line_nums = []
-        try:
-            if type(self.ui.item_specifics) is str:
-                return None
-        except AttributeError:
+        if not isinstance(self.item_list.items, list):
             return None
 
         requirements = self.item_type.upload_data["upload_requirements"]
-        for i, item in enumerate(self.ui.item_specifics):
+        for i, item in enumerate(self.item_list.items):
             is_title_short = (len(item["Title"]) > requirements["max_title_length"])
             is_price_over = (float(item["Fixed Price eBay"]) > requirements["max_price"])
             is_price_under = (float(item["Fixed Price eBay"]) < requirements["min_price"])
@@ -143,7 +142,7 @@ class EbayUpload:
     def start_upload(self, upload_type, info, extra_info=None):
         # Normal upload
         if upload_type == 0:
-            self.upload_items(self.ui.item_specifics)
+            self.upload_items(self.item_list.items)
 
         # Specific SKUs upload
         elif upload_type == 1:
@@ -152,31 +151,31 @@ class EbayUpload:
             else:
                 info = info.strip()
                 skus = [x for x in tools.chunkstring(info, SKU_LENGTH)]
-            items = [item for item in self.ui.item_specifics if (item["SKU"].upper() in skus)]
+            items = [item for item in self.item_list.items if (item["SKU"].upper() in skus)]
             if items:
                 self.upload_items(items)
             else:
-                tools.display_error("None of these SKUs were found")
+                display_error("None of these SKUs were found")
 
         # Starting point upload
         elif upload_type == 2:
             start_point = None
             end_point = None
-            for i, item in enumerate(self.ui.item_specifics):
+            for i, item in enumerate(self.item_list.items):
                 if item["SKU"].upper() in info.upper():
                     start_point = i
                 if extra_info and item["SKU"].upper() in extra_info.upper():
                     end_point = i
 
             if start_point is None:
-                tools.display_error("The start SKU was not found")
+                display_error("The start SKU was not found")
                 return None
 
             if extra_info and not end_point:
-                tools.display_error("The end SKU was not found")
+                display_error("The end SKU was not found")
                 return None
 
             if end_point:
-                self.upload_items(self.ui.item_specifics[start_point : end_point + 1])
+                self.upload_items(self.item_list.items[start_point : end_point + 1])
             else:
-                self.upload_items(self.ui.item_specifics[start_point:])
+                self.upload_items(self.item_list.items[start_point:])
