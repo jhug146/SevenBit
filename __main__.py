@@ -3,17 +3,16 @@ SevenBit v10
 Able to upload to lovedjeans website
 JSON file containing upload and translation data
 """
-from item_type import ItemType
-from translation import EbayTranslator
+from state import Accounts, ItemType, UploadMode, ItemList
+from upload import EbayUpload, UploadDisplay, EbayTranslator
 from download import GetItems
-from upload import EbayUpload
-from accounts import Accounts
-from upload_display import UploadDisplay
 from ui.main_window import UI
 from ui.utils import import_file
-from upload_mode import UploadMode
-from destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination
-from item_list import ItemList
+from ui.account_dialog import AccountDialog
+from ui.item_type_dialog import ItemTypeDialog
+from ui.download_dialog import DownloadDialog
+from ui.upload_mode_dialog import UploadModeDialog
+from upload.destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination
 
 import multiprocessing
 import functools
@@ -24,7 +23,8 @@ upload_changer = UploadMode(item_type)
 item_type.pass_upload(upload_changer)
 item_list = ItemList()
 ui = UI(item_type, item_list)
-accounts = Accounts(ui, item_type)
+accounts = Accounts(item_type)
+ui.update_title(accounts)
 translator = EbayTranslator(item_type, upload_changer)
 
 ebay_image_store = EbayImageStore(accounts, item_type, upload_changer)
@@ -58,17 +58,21 @@ ebay_upload = EbayUpload(
     on_tick=ui.window.update,
 )
 accounts.set_upload_attr(ebay_upload)
-item_type.set_accounts_attr(accounts)
 ui.set_upload_attr(ebay_upload)
-get_items = GetItems(accounts.accounts_choice, ui, item_type, upload_changer)
+get_items = GetItems(accounts.accounts_choice, item_type, upload_changer)
+
+account_dialog = AccountDialog(accounts, on_success=lambda: ui.update_title(accounts))
+item_type_dialog = ItemTypeDialog(item_type, on_success=lambda: ui.update_title(accounts))
+download_dialog = DownloadDialog(ui.window, get_items)
+upload_mode_dialog = UploadModeDialog(upload_changer)
 
 ui.init_buttons((
     functools.partial(import_file, ui),
     ebay_upload.confirm_upload,
-    get_items.get_numbers,
-    accounts.choose_account,
-    item_type.edit,
-    upload_changer.change_mode,
+    download_dialog.show,
+    account_dialog.show,
+    item_type_dialog.show,
+    upload_mode_dialog.show,
     functools.partial(ui.update_title, accounts)
 ))
 

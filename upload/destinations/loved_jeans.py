@@ -2,10 +2,9 @@ import json
 import pathlib
 import requests
 
-import tools
-from image_store import ImageStore
-from destinations.base import Destination
-from upload_result import UploadResult, UploadStatus
+from upload.destinations.image_store import ImageStore
+from upload.destinations.base import Destination
+from upload.upload_result import UploadResult, UploadStatus
 
 
 class WebsiteDestination(Destination):

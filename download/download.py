@@ -1,19 +1,56 @@
 from ebaysdk.shopping import Connection as ShoppingConnection
 
-import tkinter as tk
 from urllib.request import urlopen
 from PIL import Image
 import os
-import tools
+import csv
 import json
 import requests
 from ui.utils import display_error
 
 
+ITEM_NUMBER_LENGTH = 12
+
+
+def none_to_str(word):
+    return "" if word is None else word
+
+
+def split_list(to_split, length):
+    for i in range(0, len(to_split), length):
+        yield to_split[i:i + length]
+
+
+def write_csv(file, data):
+    with open(file, "w", newline="") as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter=",")
+        for row in data:
+            csvwriter.writerow(row)
+
+
+def check_int(num):
+    try:
+        num = str(int(num))
+        return num if len(num) == ITEM_NUMBER_LENGTH else None
+    except (ValueError, TypeError):
+        return None
+
+
+def split_numbers(nums):
+    nums = nums.replace(" ", "")
+    if "," in nums:
+        return nums.split(",")
+    elif ";" in nums:
+        return nums.split(";")
+    elif "\n" in nums:
+        return nums.split("\n")
+    else:
+        return [nums[i:i+ITEM_NUMBER_LENGTH] for i in range(0, len(nums), ITEM_NUMBER_LENGTH)]
+
+
 class GetItems(object):
     UPLOAD_BATCH_SIZE = 20
-    def __init__(self, accounts_choice, ui, item_type, upload_changer):
-        self.ui = ui
+    def __init__(self, accounts_choice, item_type, upload_changer):
         self.item_type = item_type
         self.upload_mode = upload_changer
         self.accounts_choice = accounts_choice
@@ -34,27 +71,6 @@ class GetItems(object):
             auth=(acc["appid"], acc["certid"]),
         )
         return response.json()["access_token"]
-
-    def close_window(self):
-        if hasattr(self, "entry_win"):
-            self.entry_win.destroy()
-            delattr(self, "entry_win")
-
-    def get_numbers(self):
-        if hasattr(self, "entry_win"):
-            return None
-
-        self.entry_win = tk.Toplevel(self.ui.window)
-        self.entry_win.protocol("WM_DELETE_WINDOW", self.close_window)
-        self.entry_win.title("Download")
-        self.entry_win.iconphoto(False, tk.PhotoImage(file="images/icon.png"))
-        self.entry_var = tk.StringVar(self.entry_win)
-
-        tk.Label(self.entry_win, text="Enter list of item numbers seperated by commas").grid(row=0, column=0)
-        self.entry = tk.Entry(self.entry_win, textvariable=self.entry_var)
-        self.entry.focus()
-        self.entry.grid(row=1, column=0)
-        self.entry.bind("<Return>", lambda x: self.check_nums())
 
     def get_column_num(self, name):
         return self.download_data["headers"].index(name)
@@ -115,25 +131,19 @@ class GetItems(object):
                 except TypeError:
                     row[new] = ""
 
-            row = [tools.none_to_str(detail) for detail in row]
+            row = [none_to_str(detail) for detail in row]
             items.append(row)
 
         return items
 
-    def check_nums(self):
-        self.close_window()
-        nums = self.entry_var.get()
-        nums = tools.split_numbers(nums)
-
-        numbers = [checked for num in nums if (checked := tools.check_int(num))]
-
+    def search_from_input(self, raw_input):
+        nums = split_numbers(raw_input)
+        numbers = [checked for num in nums if (checked := check_int(num))]
         if not numbers:
-            self.close_window()
-            display_error("Invalid numbers entered")
-            return None
-
+            return False
         numbers = [number.replace(" ", "") for number in numbers]
         self.search(numbers)
+        return True
 
     def make_folder(self):
         i = 1
@@ -156,14 +166,14 @@ class GetItems(object):
                 return None
 
         data = [self.download_data["headers"]]
-        for i,group in enumerate(tools.split_list(numbers, self.UPLOAD_BATCH_SIZE)):
+        for i,group in enumerate(split_list(numbers, self.UPLOAD_BATCH_SIZE)):
             items = self.get_items(group)
             if items:
                 data.extend(items)
 
         save_file = self.download_data["save_folder"] + "/ebay-import.csv"
         try:
-            tools.write_csv(save_file, data)
+            write_csv(save_file, data)
             os.system(f"start excel.exe {save_file}")
         except PermissionError:
             display_error("Please close the ebay-import.csv file before attempting to download into it")

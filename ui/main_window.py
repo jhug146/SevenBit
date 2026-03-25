@@ -1,13 +1,31 @@
 import tkinter as tk
 import tkinter.font
 import tkinter.filedialog
+import requests
 
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 
-import tools
-from upload_display import ScrollableFrame
+from upload.upload_display import ScrollableFrame
 from ui.utils import display_error
+
+
+WEBSITE_URL = "https://www.lovedjeans.co.uk"
+
+
+def deleter_status_message(item_type):
+    try:
+        website_data = item_type.upload_data["website"]["item"]
+        response = requests.post(WEBSITE_URL + "/is_deleter_running/", data={
+            "username": website_data["username"],
+            "password": website_data["password"]
+        })
+        if response.text == "True":
+            return "Deleter Is Running"
+        else:
+            return "Deleter Not Running"
+    except Exception as _:
+        return "Deleter Not Running"
 
 
 class UI:
@@ -83,7 +101,7 @@ class UI:
             child.destroy()
 
     def update_title(self, accounts):
-        self.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {self.item_type.upload_data['name']} - {tools.deleter_status_message(self.item_type)}")
+        self.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {self.item_type.upload_data['name']} - {deleter_status_message(self.item_type)}")
 
     def make_font(self, size):
         return tkinter.font.Font(self.window, family="Helvetica", size=size)

@@ -1,12 +1,26 @@
 import tkinter as tk
 import tkinter.filedialog
 import win32api
-
-import tools
+import csv
 
 
 def display_error(message, message_type="Error"):
     win32api.MessageBox(0, message, message_type)
+
+
+def get_csv_as_list(file, headers):
+    try:
+        with open(file) as csv_file:
+            reader = csv.reader(csv_file, delimiter=",")
+            final = []
+            for row in reader:
+                final.append(row)
+        if headers:
+            return final[0], final[1:]
+        else:
+            return final
+    except:
+        return None
 
 
 def import_file(ui):
@@ -17,7 +31,7 @@ def import_file(ui):
         display_error("Imported files must be of .csv type.")
         return None
 
-    csv_file_list = tools.get_csv_as_list(filename, True)
+    csv_file_list = get_csv_as_list(filename, True)
     if csv_file_list:
         headers, items = csv_file_list
     else:

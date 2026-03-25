@@ -1,9 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
-import tools
-from upload_result import UploadStatus
+from upload.upload_result import UploadStatus
 from ui.utils import display_error
+
+
+def chunkstring(string, length):
+    return (string[0+i:length+i] for i in range(0, len(string), length))
 
 SKU_LENGTH = 9
 
@@ -153,7 +156,7 @@ class EbayUpload:
                 skus = [x.upper() for x in info.split(",")]
             else:
                 info = info.strip()
-                skus = [x for x in tools.chunkstring(info, SKU_LENGTH)]
+                skus = [x for x in chunkstring(info, SKU_LENGTH)]
             items = [item for item in self.item_list.items if (item["SKU"].upper() in skus)]
             if items:
                 self.upload_items(items)

@@ -15,7 +15,22 @@ import time
 import requests
 import functools
 
-import tools
+
+def in_to_cm(value):
+    return str(round(int(value) * 2.5))
+
+
+def remove_dupes(word, repeat=True):
+    word_list = word.split(" ")
+    dupe_list = []
+    final_list = []
+    for word in word_list:
+        if not (word.lower() in dupe_list) and word:
+            final_list.append(word)
+            dupe_list.append(word.lower())
+    if repeat:
+        return remove_dupes(" ".join(final_list), False)
+    return " ".join(final_list)
 
 
 class EbayTranslator:
@@ -108,7 +123,7 @@ class EbayTranslator:
 
                     if not (country_code in no_long_text_translation):
                         inside_leg = country_translation["IS_Inside Leg"][:2]
-                        country_translation["IS_Inside Leg"] = tools.in_to_cm(inside_leg) + "cm"  # Take the first two numbers and convert to cm
+                        country_translation["IS_Inside Leg"] = in_to_cm(inside_leg) + "cm"  # Take the first two numbers and convert to cm
 
                     if gt_code == "it" or (gt_code == "de" and item["IS_Department"] == "Men"):
                         country_translation["IS_Size"] = "W" + country_translation["IS_Size"]
@@ -228,7 +243,7 @@ class EbayTranslator:
                     returned = returned[1:]
                 title += returned + " "
 
-        title = tools.remove_dupes(title)
+        title = remove_dupes(title)
         return self.shorten_title(title, country_num)
 
     def shorten_title(self, title, country_num):

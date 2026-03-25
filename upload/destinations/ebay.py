@@ -4,9 +4,9 @@ import ebaysdk.exception
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 
-from image_store import ImageStore
-from destinations.base import Destination
-from upload_result import UploadResult, ImageUploadResult, UploadStatus
+from upload.destinations.image_store import ImageStore
+from upload.destinations.base import Destination
+from upload.upload_result import UploadResult, ImageUploadResult, UploadStatus
 
 
 class EbayImageStore:
