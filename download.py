@@ -10,7 +10,6 @@ import requests
 
 
 class GetItems(object):
-    ITEM_NUMBER_LENGTH = 12
     UPLOAD_BATCH_SIZE = 20
     def __init__(self, accounts_choice, ui, item_type, upload_changer):
         self.ui = ui
@@ -82,7 +81,6 @@ class GetItems(object):
         price_column = self.get_column_num("Fixed Price eBay")
         description_column = self.get_column_num("eBay Condition Description")
 
-        category_column = self.get_column_num("eBay Store Category1Name")
         gender = self.get_column_num("IS_Department")
         waist = self.get_column_num("Waist")
         length =  self.get_column_num("Tag L")
@@ -115,7 +113,6 @@ class GetItems(object):
                         row[new] = list(row[new])[0]
                 except TypeError:
                     row[new] = ""
-            row[category_column] = f'{row[gender]}s::Waist {row[waist]}"::Leg {row[length]}"'
 
             row = [tools.none_to_str(detail) for detail in row]
             items.append(row)
@@ -127,11 +124,7 @@ class GetItems(object):
         nums = self.entry_var.get()
         nums = tools.split_numbers(nums)
 
-        numbers = []
-        for num in nums:
-            num = tools.check_int(num)
-            if num:
-                numbers.append(num)
+        numbers = [checked for num in nums if (checked := tools.check_int(num))]
 
         if not numbers:
             self.close_window()

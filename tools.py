@@ -421,9 +421,6 @@ def clear_widget(widget):
     for child in widget.winfo_children():
         child.destroy()
 
-def is_blank(string):
-    return string or string.strip()
-
 def split_list(to_split, length):
     for i in range(0, len(to_split), length):
         yield to_split[i:i + length]
@@ -449,9 +446,8 @@ def remove_dupes(word, repeat=True):
 def check_int(num):
     try:
         num = str(int(num))
-        assert len(num) == 12
-        return num
-    except:
+        return num if len(num) == ITEM_NUMBER_LENGTH else None
+    except (ValueError, TypeError):
         return None
 
 def split_numbers(nums):

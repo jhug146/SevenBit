@@ -93,8 +93,6 @@ class WebsiteDestination(Destination):
         order = zip(upload_data["upload_ordering"], upload_data["detail_ordering"])
         for key, value in order:
             to_upload[value] = item[key]
-            if (key in upload_data["blank_to_zero"]) and (tools.is_blank(value)):
-                to_upload[value] = 0
 
         to_upload["paths"] = ";" * (item["Path"].count(";") - 1)
         try:
