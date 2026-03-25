@@ -10,8 +10,8 @@ from upload.upload_result import UploadResult, UploadStatus
 class WebsiteDestination(Destination):
     """Handles image and item uploads to a custom website (e.g. lovedjeans.co.uk)."""
 
-    def __init__(self, item_type):
-        self.item_type = item_type
+    def __init__(self, upload_config):
+        self.upload_config = upload_config
         self.client = requests.session()
         self._image_store = ImageStore()
 
@@ -42,8 +42,8 @@ class WebsiteDestination(Destination):
         return self._image_store.get(sku, self._do_upload_images, paths, sku, title, display)
 
     def _do_upload_images(self, paths: str, sku: str, title: str, display, no_urls: bool = False) -> list | None:
-        website_data = self.item_type.upload_data["website"]["images"]
-        URL = self.item_type.upload_data["website"]["url"] + website_data["url"]
+        website_data = self.upload_config.website_images
+        URL = self.upload_config.website_url + website_data["url"]
 
         path_list = paths.split(";")
         if path_list[-1] == "":
@@ -86,17 +86,16 @@ class WebsiteDestination(Destination):
 
     def upload_item(self, item_batch: list, images, listing_number: int, display) -> UploadResult:
         item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
-        upload_data = self.item_type.upload_data
-        website_data = upload_data["website"]["item"]
+        website_data = self.upload_config.website_item
         to_upload = {}
-        order = zip(upload_data["upload_ordering"], upload_data["detail_ordering"])
+        order = zip(self.upload_config.upload_ordering, self.upload_config.detail_ordering)
         for key, value in order:
             to_upload[value] = item[key]
 
         to_upload["paths"] = ";" * (item["Path"].count(";") - 1)
         try:
             response = self.client.post(
-                upload_data["website"]["url"] + website_data["url"],
+                self.upload_config.website_url + website_data["url"],
                 data={
                     "item": json.dumps(to_upload),
                     "username": website_data["username"],

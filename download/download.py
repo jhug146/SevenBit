@@ -50,8 +50,8 @@ def split_numbers(nums):
 
 class GetItems(object):
     UPLOAD_BATCH_SIZE = 20
-    def __init__(self, accounts_choice, item_type, upload_changer):
-        self.item_type = item_type
+    def __init__(self, accounts_choice, download_config, upload_changer):
+        self.download_config = download_config
         self.upload_mode = upload_changer
         self.accounts_choice = accounts_choice
         acc = accounts_choice["credentials"]
@@ -73,7 +73,7 @@ class GetItems(object):
         return response.json()["access_token"]
 
     def get_column_num(self, name):
-        return self.download_data["headers"].index(name)
+        return self.download_config.headers.index(name)
 
     def get_items(self, numbers):
         request = {
@@ -90,9 +90,9 @@ class GetItems(object):
         item_list = response["Item"] if type(response["Item"]) is list else [response["Item"]]
         download_images = self.upload_mode.download_images
 
-        set_values = self.download_data["set_values"]
-        non_is_values = self.download_data["non_is_values"]
-        is_values = self.download_data["is_values"]
+        set_values = self.download_config.set_values
+        non_is_values = self.download_config.non_is_values
+        is_values = self.download_config.is_values
 
         images_column = self.get_column_num("Path")
         price_column = self.get_column_num("Fixed Price eBay")
@@ -104,7 +104,7 @@ class GetItems(object):
 
         items = []
         for item in item_list:
-            row = [None] * len(self.download_data["headers"])
+            row = [None] * len(self.download_config.headers)
             row[images_column] = self.get_images(item["PictureURL"] + [item["GalleryURL"]]) if download_images else ""
 
             for col,value in set_values.items():
@@ -123,7 +123,7 @@ class GetItems(object):
                     if namevalue["Name"] in is_values:
                         row[is_values[namevalue["Name"]]] = namevalue["Value"]
 
-            for new,original,start,end in self.download_data["substrings"]:
+            for new,original,start,end in self.download_config.substrings:
                 try:
                     row[new] = row[original][start:end]
                     if "(" in row[new]:
@@ -147,9 +147,9 @@ class GetItems(object):
 
     def make_folder(self):
         i = 1
-        self.folder = self.download_data["save_folder"] + "/image_folder-1"
+        self.folder = self.download_config.save_folder + "/image_folder-1"
         while os.path.exists(self.folder):
-            self.folder = self.download_data["save_folder"] + f"/image_folder-{i}"
+            self.folder = self.download_config.save_folder + f"/image_folder-{i}"
             i += 1
         try:
             os.mkdir(self.folder)
@@ -159,19 +159,17 @@ class GetItems(object):
         return self.folder
 
     def search(self, numbers):
-        self.download_data = self.item_type.download_data
-
         if self.upload_mode.download_images:
             if not self.make_folder():
                 return None
 
-        data = [self.download_data["headers"]]
+        data = [self.download_config.headers]
         for i,group in enumerate(split_list(numbers, self.UPLOAD_BATCH_SIZE)):
             items = self.get_items(group)
             if items:
                 data.extend(items)
 
-        save_file = self.download_data["save_folder"] + "/ebay-import.csv"
+        save_file = self.download_config.save_folder + "/ebay-import.csv"
         try:
             write_csv(save_file, data)
             os.system(f"start excel.exe {save_file}")

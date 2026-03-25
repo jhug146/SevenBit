@@ -19,25 +19,24 @@ import functools
 
 
 item_type = ItemType()
-upload_changer = UploadMode(item_type)
-item_type.pass_upload(upload_changer)
+upload_changer = UploadMode(item_type.upload)
 item_list = ItemList()
-ui = UI(item_type, item_list)
-accounts = Accounts(item_type)
+ui = UI(item_type.upload, item_list)
+accounts = Accounts()
 ui.update_title(accounts)
-translator = EbayTranslator(item_type, upload_changer)
+translator = EbayTranslator(item_type.translation, upload_changer)
 
-ebay_image_store = EbayImageStore(accounts, item_type, upload_changer)
-website_dest = WebsiteDestination(item_type)
+ebay_image_store = EbayImageStore(accounts, item_type.upload, upload_changer)
+website_dest = WebsiteDestination(item_type.upload)
 
 destinations = [
-    EbaySiteDestination(0, accounts, item_type, ebay_image_store),  # US
-    EbaySiteDestination(1, accounts, item_type, ebay_image_store),  # UK
-    EbaySiteDestination(2, accounts, item_type, ebay_image_store),  # Australia
-    EbaySiteDestination(3, accounts, item_type, ebay_image_store),  # France
-    EbaySiteDestination(4, accounts, item_type, ebay_image_store),  # Germany
-    EbaySiteDestination(5, accounts, item_type, ebay_image_store),  # Italy
-    EbaySiteDestination(6, accounts, item_type, ebay_image_store),  # Spain
+    EbaySiteDestination(0, accounts, item_type.upload, ebay_image_store),  # US
+    EbaySiteDestination(1, accounts, item_type.upload, ebay_image_store),  # UK
+    EbaySiteDestination(2, accounts, item_type.upload, ebay_image_store),  # Australia
+    EbaySiteDestination(3, accounts, item_type.upload, ebay_image_store),  # France
+    EbaySiteDestination(4, accounts, item_type.upload, ebay_image_store),  # Germany
+    EbaySiteDestination(5, accounts, item_type.upload, ebay_image_store),  # Italy
+    EbaySiteDestination(6, accounts, item_type.upload, ebay_image_store),  # Spain
     website_dest,
 ]
 
@@ -52,14 +51,14 @@ upload_changer.register(destinations)
 display_factory = lambda listings, upload: UploadDisplay(listings, ui, upload)
 
 ebay_upload = EbayUpload(
-    accounts, translator, display_factory, upload_changer, item_type, destinations, item_list,
+    accounts, translator, display_factory, upload_changer, item_type.upload, destinations, item_list,
     on_validation_error=ui.outline_item,
     on_request_options=ui.get_options,
     on_tick=ui.window.update,
 )
 accounts.set_upload_attr(ebay_upload)
 ui.set_upload_attr(ebay_upload)
-get_items = GetItems(accounts.accounts_choice, item_type, upload_changer)
+get_items = GetItems(accounts.accounts_choice, item_type.download, upload_changer)
 
 account_dialog = AccountDialog(accounts, on_success=lambda: ui.update_title(accounts))
 item_type_dialog = ItemTypeDialog(item_type, on_success=lambda: ui.update_title(accounts))

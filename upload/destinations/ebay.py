@@ -22,9 +22,9 @@ class EbayImageStore:
 
     MAX_RETRIES = 3
 
-    def __init__(self, accounts, item_type, upload_mode):
+    def __init__(self, accounts, upload_config, upload_mode):
         self.accounts = accounts
-        self.item_type = item_type
+        self.upload_config = upload_config
         self.upload_mode = upload_mode
         self._image_store = ImageStore()
         self._fast_source = None
@@ -76,7 +76,7 @@ class EbayImageStore:
             try:
                 acc = self.accounts.accounts_choice["credentials"]
                 connection = TradingConnection(config_file=None, siteid="3", devid=acc["devid"], certid=acc["certid"], token=acc["token"], appid=acc["appid"], domain="api.ebay.com", debug=False)
-                response = connection.execute("UploadSiteHostedPictures", self.item_type.upload_data["pictureData"], files=files)
+                response = connection.execute("UploadSiteHostedPictures", self.upload_config.picture_data, files=files)
                 if "Ack" not in response.dict():
                     display.push_error(response.dict(), sku)
                     continue
@@ -113,10 +113,10 @@ class EbaySiteDestination(Destination):
     OPTION_KEYS = ("US",  "UK",  "AUS",  "FR",  "DE",  "IT",  "ES")
     LABELS      = ("US",  "UK",  "AUS",  "FRA", "GER", "ITA", "SPA")
 
-    def __init__(self, site_num: int, accounts, item_type, image_store: EbayImageStore):
+    def __init__(self, site_num: int, accounts, upload_config, image_store: EbayImageStore):
         self.site_num = site_num
         self.accounts = accounts
-        self.item_type = item_type
+        self.upload_config = upload_config
         self.image_store = image_store
         self.update_connection()
 
@@ -155,19 +155,18 @@ class EbaySiteDestination(Destination):
         if len(details) == 1:
             details = details[0]
 
-        upload_data = self.item_type.upload_data
         account_data = self.accounts.accounts_choice
-        policies = account_data["policies"][upload_data["name"]]
+        policies = account_data["policies"][self.upload_config.name]
 
         item_specific_list = []
         for detail in details:
             prefix, suffix = detail[:3], detail[3:]
-            if prefix == "IS_" and upload_data["translate_headers"]:
+            if prefix == "IS_" and self.upload_config.translate_headers:
                 item_specific_list.append({
-                    "Name": upload_data["is_names"][suffix][self.site_num],
+                    "Name": self.upload_config.is_names[suffix][self.site_num],
                     "Value": details[detail]
                 })
-            elif (prefix == "MU_" or (prefix == "IS_" and not upload_data["translate_headers"])) and details[detail]:
+            elif (prefix == "MU_" or (prefix == "IS_" and not self.upload_config.translate_headers)) and details[detail]:
                 item_specific_list.append({
                     "Name": suffix,
                     "Value": details[detail]
@@ -189,8 +188,8 @@ class EbaySiteDestination(Destination):
                 "SKU": details["SKU"],
                 "Description": f"<![CDATA[{html}]]>",
                 "ConditionDescription": details["eBay Condition Description"],
-                "Country": upload_data["user_info"]["country"],
-                "Location": upload_data["user_info"]["country"],
+                "Country": self.upload_config.country,
+                "Location": self.upload_config.country,
                 "Site": self.SITE_ABBRS[self.site_num],
                 "SiteId": self.SITE_IDS[self.site_num],
                 "Currency": self.SITE_CURRS[self.site_num],
@@ -206,9 +205,9 @@ class EbaySiteDestination(Destination):
                     "SellerReturnProfile":   {"ReturnProfileID":   returns_id}
                 },
                 "SellerContactDetails": {
-                    "County": upload_data["user_info"]["county"]
+                    "County": self.upload_config.county
                 },
-                "PostalCode": upload_data["user_info"]["postcode"],
+                "PostalCode": self.upload_config.postcode,
                 "Storefront": {
                     "StoreCategoryID": store_category
                 },
@@ -221,7 +220,7 @@ class EbaySiteDestination(Destination):
                 "PictureDetails": {
                     "PictureURL": images
                 },
-                "DispatchTimeMax": upload_data["user_info"]["max_dispatch_time"]
+                "DispatchTimeMax": self.upload_config.max_dispatch_time
             }
         }
 

@@ -1,0 +1,24 @@
+from state._json import load_json_file
+
+
+class DownloadConfig:
+    def load(self):
+        self._data = load_json_file("user/download.json")
+
+    @property
+    def headers(self): return self._data["headers"]
+
+    @property
+    def set_values(self): return self._data["set_values"]
+
+    @property
+    def non_is_values(self): return self._data["non_is_values"]
+
+    @property
+    def is_values(self): return self._data["is_values"]
+
+    @property
+    def substrings(self): return self._data["substrings"]
+
+    @property
+    def save_folder(self): return self._data["save_folder"]

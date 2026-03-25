@@ -39,9 +39,9 @@ class EbayTranslator:
     GOOGLE_TRANSLATE_CODES = (None, None, None, "fr", "de", "it", "es")
     DEFAULT_COUNTRY_CODES = ("US", "UK", "AUS", "FR", "DE", "IT", "ES")
 
-    def __init__(self, item_type, upload_mode):
+    def __init__(self, translation_config, upload_mode):
         self.upload_mode = upload_mode
-        self.item_type = item_type
+        self.translation_config = translation_config
         self.translators = (
             GoogleTranslator(source="auto", target="french"),
             GoogleTranslator(source="auto", target="german"),
@@ -49,7 +49,7 @@ class EbayTranslator:
             GoogleTranslator(source="auto", target="spanish")
         )
         self.rates = requests.get(
-            f"https://api.fastforex.io/fetch-multi?from=USD&to=EUR,AUD,GBP&api_key={item_type.translation_data['fastforex-api-key']}",
+            f"https://api.fastforex.io/fetch-multi?from=USD&to=EUR,AUD,GBP&api_key={translation_config.fastforex_api_key}",
             headers = {"Accept": "application/json"}
         ).json()["results"]
         self.usd_rate = 1 / self.rates["GBP"]
@@ -62,24 +62,23 @@ class EbayTranslator:
         """
         translated_items = []
         item_count = 0
-    
+
         website_upload = self.upload_mode.is_destination_enabled("SQL")
-        general_translation_data = self.item_type.translation_data
-        no_long_text_translation = general_translation_data.get("no_long_text_translation")
+        no_long_text_translation = self.translation_config.no_long_text_translation
 
         for item in items:
             item_count += 1
             print(f"Translating {item_count} / {len(items)}")
-            
+
             item_translation = []
 
             for i,gt_code in enumerate(self.GOOGLE_TRANSLATE_CODES):
-                country_code = general_translation_data["country_codes"][i]
+                country_code = self.translation_config.country_codes[i]
                 if (not self.upload_mode.upload_state[i] or not country_code) and ((not website_upload) or i != 1):
                     item_translation.append(None)
                     continue
-                
-                translation_data = general_translation_data["translation_data"][i] if (general_translation_data["translation_data"]) else None
+
+                translation_data = self.translation_config.per_country_translations[i] if (self.translation_config.per_country_translations) else None
 
                 if translation_data:
                     country_translation = {}
@@ -93,12 +92,12 @@ class EbayTranslator:
                                 else:
                                     detail_add = re.sub(key, value, detail_add, flags=re.IGNORECASE)
 
-                        if header in general_translation_data["google_translate_fields"]:
+                        if header in self.translation_config.google_translate_fields:
                             if (country_code in no_long_text_translation) or (not gt_code) or (not detail_add.strip()):
                                 country_translation[header] = detail_add
                                 continue
 
-                            for key,value in general_translation_data["condition_translation"][header].items():
+                            for key,value in self.translation_config.condition_translation[header].items():
                                 if detail_add == key:
                                     detail_add = value[i-3]
                                     break
@@ -129,13 +128,13 @@ class EbayTranslator:
                         country_translation["IS_Size"] = "W" + country_translation["IS_Size"]
 
                     concat_condition = []
-                    for condition_name in general_translation_data["condition_translation"].keys():
+                    for condition_name in self.translation_config.condition_translation.keys():
                         condition = country_translation[condition_name]
                         if condition and condition != " ":
                             concat_condition.append(condition)
-                    country_translation["eBay Condition Description"] = general_translation_data["condition_openers"][i] + " ••••• ".join(concat_condition)
+                    country_translation["eBay Condition Description"] = self.translation_config.condition_openers[i] + " ••••• ".join(concat_condition)
 
-                    country_translation["Fixed Price eBay"] = self.currency_change(float(country_translation["Fixed Price eBay"]), general_translation_data["currency_codes"][i])
+                    country_translation["Fixed Price eBay"] = self.currency_change(float(country_translation["Fixed Price eBay"]), self.translation_config.currency_codes[i])
                     country_translation["IS_Department"] = country_translation["IS_Department"].replace("DaHerren", "Damen")
                     country_translation["Title"] = self.title_fix(country_translation, i, country_code)
 
@@ -173,7 +172,7 @@ class EbayTranslator:
         :return: string
         """
         final_word = word
-        for key,value in self.item_type.translation_data["translation_dupes"].items():
+        for key,value in self.translation_config.translation_dupes.items():
             if key.lower() in final_word.lower():
                 for replace in value:
                     final_word = re.sub(" " + replace, "", final_word, flags=re.IGNORECASE)
@@ -227,14 +226,14 @@ class EbayTranslator:
         :param country_num: int
         :return: string
         """
-        if country_code in self.item_type.translation_data["title_ignore"]:
+        if country_code in self.translation_config.title_ignore:
             return item["Title"]
 
-        self.trans_data = self.item_type.translation_data["title_fixing_data"]
+        self.trans_data = self.translation_config.title_fixing_data
         self.get_info = functools.partial(self.get_val, item, country_num)
-        data = self.item_type.translation_data["title_order"]
+        data = self.translation_config.title_order
         title = ""
- 
+
         for component in data:
             returned = self.get_info(component)
             if returned:
@@ -249,7 +248,7 @@ class EbayTranslator:
     def shorten_title(self, title, country_num):
         if len(title) <= self.TITLE_MAX_LENGTH:
             return title
-        trans = self.item_type.translation_data["category_specific_translations"]
+        trans = self.translation_config.category_specific_translations
 
         remove = (trans["womens_size"][country_num], " " + trans["blue"][country_num], " WMN", trans["stretch"][country_num], trans["mens"][country_num], trans["womens"][country_num], "end")
         i = 0
@@ -270,13 +269,12 @@ class EbayTranslator:
         :param country_num: int
         :return: string
         """
-        translation_data = self.item_type.translation_data
-        if translation_data.get("leave_html"):
+        if self.translation_config.leave_html:
             return item["eBay Description"]
 
         try:
-            country_code = self.item_type.translation_data["country_codes"][country_num]
-            data = self.item_type.translation_data["html"][country_code]
+            country_code = self.translation_config.country_codes[country_num]
+            data = self.translation_config.html[country_code]
         except KeyError:
             print(f"HTML or country code for country number {country_num} is missing or incorrect")
             return "error"

@@ -13,9 +13,9 @@ from ui.utils import display_error
 WEBSITE_URL = "https://www.lovedjeans.co.uk"
 
 
-def deleter_status_message(item_type):
+def deleter_status_message(upload_config):
     try:
-        website_data = item_type.upload_data["website"]["item"]
+        website_data = upload_config.website_item
         response = requests.post(WEBSITE_URL + "/is_deleter_running/", data={
             "username": website_data["username"],
             "password": website_data["password"]
@@ -31,8 +31,8 @@ def deleter_status_message(item_type):
 class UI:
     CONDITION_HEADERS = ("Condition 1", "Condition 2", "Condition 4 (Free Text)")
 
-    def __init__(self, item_type, item_list):
-        self.item_type = item_type
+    def __init__(self, upload_config, item_list):
+        self.upload_config = upload_config
         self.item_list = item_list
         self.upload_type = 0
         self.window = tk.Tk()
@@ -101,7 +101,7 @@ class UI:
             child.destroy()
 
     def update_title(self, accounts):
-        self.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {self.item_type.upload_data['name']} - {deleter_status_message(self.item_type)}")
+        self.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {self.upload_config.name} - {deleter_status_message(self.upload_config)}")
 
     def make_font(self, size):
         return tkinter.font.Font(self.window, family="Helvetica", size=size)
@@ -240,7 +240,7 @@ class UI:
                 self.item_list.items[n][self.CONDITION_HEADERS[i]] = condition_box.get("1.0", "end").strip().strip("\n")
                 middle.append(condition_box.get("1.0", "end").strip().strip("\n"))
 
-            self.item_list.items[n]["eBay Condition Description"] = self.item_type.upload_data["condition_opening"] + " ".join(middle) + self.item_type.upload_data["condition_closing"]
+            self.item_list.items[n]["eBay Condition Description"] = self.upload_config.condition_opening + " ".join(middle) + self.upload_config.condition_closing
             for detail in var_dict.keys():
                 self.item_list.items[n][detail] = var_dict[detail].get()
 
@@ -249,7 +249,7 @@ class UI:
         def single_item_upload():
             self.upload.start_upload(1, self.item_list.items[n]["SKU"])
 
-        displayed_details = self.item_type.upload_data["display_order"]
+        displayed_details = self.upload_config.display_order
 
         var_dict = {}
         titles = tuple(self.item_list.items[n].keys())

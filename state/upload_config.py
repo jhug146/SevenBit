@@ -1,0 +1,60 @@
+from state._json import load_json_file
+
+
+class UploadConfig:
+    def load(self, name="default"):
+        self._data = load_json_file("user/upload.json", name)
+
+    @property
+    def name(self): return self._data["name"]
+
+    @property
+    def upload_to(self): return self._data["upload_to"]
+
+    @property
+    def upload_requirements(self): return self._data["upload_requirements"]
+
+    @property
+    def picture_data(self): return self._data["pictureData"]
+
+    @property
+    def website_url(self): return self._data["website"]["url"]
+
+    @property
+    def website_images(self): return self._data["website"]["images"]
+
+    @property
+    def website_item(self): return self._data["website"]["item"]
+
+    @property
+    def condition_opening(self): return self._data["condition_opening"]
+
+    @property
+    def condition_closing(self): return self._data["condition_closing"]
+
+    @property
+    def display_order(self): return self._data["display_order"]
+
+    @property
+    def translate_headers(self): return self._data["translate_headers"]
+
+    @property
+    def is_names(self): return self._data["is_names"]
+
+    @property
+    def country(self): return self._data["user_info"]["country"]
+
+    @property
+    def county(self): return self._data["user_info"]["county"]
+
+    @property
+    def postcode(self): return self._data["user_info"]["postcode"]
+
+    @property
+    def max_dispatch_time(self): return self._data["user_info"]["max_dispatch_time"]
+
+    @property
+    def upload_ordering(self): return self._data["upload_ordering"]
+
+    @property
+    def detail_ordering(self): return self._data["detail_ordering"]

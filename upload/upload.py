@@ -12,10 +12,10 @@ SKU_LENGTH = 9
 
 
 class EbayUpload:
-    def __init__(self, accounts, translator, display_factory, upload_changer, item_type, destinations, item_list,
+    def __init__(self, accounts, translator, display_factory, upload_changer, upload_config, destinations, item_list,
                  on_validation_error, on_request_options, on_tick):
         self.accounts = accounts
-        self.item_type = item_type
+        self.upload_config = upload_config
         self.upload_mode = upload_changer
         self.item_list = item_list
         self.translator = translator
@@ -57,7 +57,7 @@ class EbayUpload:
             if account_data["default_uploads"]:
                 upload_countries = account_data["default_uploads"]
             else:
-                upload_countries = self.item_type.upload_data["upload_to"]
+                upload_countries = self.upload_config.upload_to
 
             enabled_dests = [
                 d for d in self.all_dests
@@ -130,7 +130,7 @@ class EbayUpload:
         if not isinstance(self.item_list.items, list):
             return None
 
-        requirements = self.item_type.upload_data["upload_requirements"]
+        requirements = self.upload_config.upload_requirements
         for i, item in enumerate(self.item_list.items):
             is_title_short = (len(item["Title"]) > requirements["max_title_length"])
             is_price_over = (float(item["Fixed Price eBay"]) > requirements["max_price"])
