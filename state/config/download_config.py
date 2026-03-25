@@ -1,9 +1,7 @@
-from state._json import load_json_file
-
 
 class DownloadConfig:
-    def load(self):
-        self._data = load_json_file("user/download.json")
+    def load(self, data):
+        self._data = data
 
     @property
     def headers(self): return self._data["headers"]

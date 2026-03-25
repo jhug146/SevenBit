@@ -101,7 +101,7 @@ class UI:
             child.destroy()
 
     def update_title(self, accounts):
-        self.window.title(f"SevenBit - {accounts.accounts_choice['name']} - {self.upload_config.name} - {deleter_status_message(self.upload_config)}")
+        self.window.title(f"SevenBit - {accounts.name} - {self.upload_config.name} - {deleter_status_message(self.upload_config)}")
 
     def make_font(self, size):
         return tkinter.font.Font(self.window, family="Helvetica", size=size)

@@ -1,9 +1,7 @@
-from state._json import load_json_file
-
 
 class TranslationConfig:
-    def load(self, name="default"):
-        self._data = load_json_file("user/translation.json", name)
+    def load(self, data):
+        self._data = data
 
     @property
     def fastforex_api_key(self): return self._data["fastforex-api-key"]

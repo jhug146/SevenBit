@@ -1,9 +1,7 @@
-from state._json import load_json_file
-
 
 class UploadConfig:
-    def load(self, name="default"):
-        self._data = load_json_file("user/upload.json", name)
+    def load(self, data):
+        self._data = data
 
     @property
     def name(self): return self._data["name"]

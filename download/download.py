@@ -50,25 +50,23 @@ def split_numbers(nums):
 
 class GetItems(object):
     UPLOAD_BATCH_SIZE = 20
-    def __init__(self, accounts_choice, download_config, upload_changer):
+    def __init__(self, accounts, download_config, upload_changer):
+        self.accounts = accounts
         self.download_config = download_config
         self.upload_mode = upload_changer
-        self.accounts_choice = accounts_choice
-        acc = accounts_choice["credentials"]
 
         self.connection = ShoppingConnection(
             config_file = None,
-            appid = acc["appid"],
+            appid = accounts.appid,
             debug = False
         )
         self.file_count = 0
 
     def get_token(self):
-        acc = self.accounts_choice["credentials"]
         response = requests.post(
             "https://api.ebay.com/oauth/api_scope",
             data={"grant_type": "client_credentials"},
-            auth=(acc["appid"], acc["certid"]),
+            auth=(self.accounts.appid, self.accounts.certid),
         )
         return response.json()["access_token"]
 

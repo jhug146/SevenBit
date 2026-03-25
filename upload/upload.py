@@ -45,7 +45,6 @@ class EbayUpload:
         self.length = len(listings)
         self.listing_number = 0
 
-        account_data = self.accounts.accounts_choice
         for item_batch in listings:
             self.listing_number += 1
             item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
@@ -54,8 +53,8 @@ class EbayUpload:
                 display_error(f"Upload stopped on this SKU: {item['SKU']}")
                 break
 
-            if account_data["default_uploads"]:
-                upload_countries = account_data["default_uploads"]
+            if self.accounts.default_uploads:
+                upload_countries = self.accounts.default_uploads
             else:
                 upload_countries = self.upload_config.upload_to
 

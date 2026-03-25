@@ -74,8 +74,7 @@ class EbayImageStore:
         while attempts < self.MAX_RETRIES:
             attempts += 1
             try:
-                acc = self.accounts.accounts_choice["credentials"]
-                connection = TradingConnection(config_file=None, siteid="3", devid=acc["devid"], certid=acc["certid"], token=acc["token"], appid=acc["appid"], domain="api.ebay.com", debug=False)
+                connection = TradingConnection(config_file=None, siteid="3", devid=self.accounts.devid, certid=self.accounts.certid, token=self.accounts.token, appid=self.accounts.appid, domain="api.ebay.com", debug=False)
                 response = connection.execute("UploadSiteHostedPictures", self.upload_config.picture_data, files=files)
                 if "Ack" not in response.dict():
                     display.push_error(response.dict(), sku)
@@ -135,14 +134,13 @@ class EbaySiteDestination(Destination):
         self.image_store.clear(sku)
 
     def update_connection(self):
-        acc = self.accounts.accounts_choice["credentials"]
         self.connection = TradingConnection(
             config_file=None,
             siteid=self.SITE_IDS[self.site_num],
-            devid=acc["devid"],
-            certid=acc["certid"],
-            token=acc["token"],
-            appid=acc["appid"],
+            devid=self.accounts.devid,
+            certid=self.accounts.certid,
+            token=self.accounts.token,
+            appid=self.accounts.appid,
             domain="api.ebay.com",
             debug=False
         )
@@ -155,8 +153,7 @@ class EbaySiteDestination(Destination):
         if len(details) == 1:
             details = details[0]
 
-        account_data = self.accounts.accounts_choice
-        policies = account_data["policies"][self.upload_config.name]
+        policies = self.accounts.policies(self.upload_config.name)
 
         item_specific_list = []
         for detail in details:
@@ -181,7 +178,7 @@ class EbaySiteDestination(Destination):
         shipping_id = policies["shipping"][self.site_num]
         returns_id = policies["returns"][self.site_num]
 
-        store_category = account_data.get("default_store_category", details["eBay Store Category1ID"])
+        store_category = self.accounts.default_store_category or details["eBay Store Category1ID"]
         request = {
             "Item": {
                 "Title": details["Title"],
