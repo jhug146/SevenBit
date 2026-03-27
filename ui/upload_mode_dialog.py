@@ -12,7 +12,7 @@ class UploadModeDialog:
 
         row = 0
         self._ebay_vars = []
-        for i, country in enumerate(self.upload_mode.EBAY_COUNTRIES):
+        for i, country in enumerate(self.upload_mode.ebay_labels):
             tk.Label(self.win, text=country).grid(row=row, column=0)
             var = tk.IntVar(self.win, value=self.upload_mode.upload_state[i])
             tk.Checkbutton(self.win, variable=var, command=self._on_change).grid(row=row, column=1)

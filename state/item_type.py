@@ -17,10 +17,10 @@ class ItemType:
         self.upload = UploadConfig()
         self.translation = TranslationConfig()
         self.download = DownloadConfig()
+        self.accounts.load(load_json_file("user/accounts.json"))
         self.get_info()
 
     def get_info(self, name="default"):
-        self.accounts.load(load_json_file("user/accounts.json"))
         self.upload.load(load_json_file("user/upload.json", name))
         self.translation.load(load_json_file("user/translation.json", name))
         self.download.load(load_json_file("user/download.json"))

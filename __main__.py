@@ -19,7 +19,7 @@ import functools
 
 
 item_type = ItemType()
-upload_changer = UploadMode(item_type.upload)
+upload_changer = UploadMode(item_type.upload, EbaySiteDestination.LABELS, EbaySiteDestination.OPTION_KEYS)
 item_list = ItemList()
 ui = UI(item_type.upload, item_list)
 ui.update_title(item_type.accounts)
