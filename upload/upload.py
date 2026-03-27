@@ -60,7 +60,7 @@ class Upload:
             item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
             if self.stop_upload:
                 self.stop_upload = False
-                self.on_error(f"Upload stopped on this SKU: {item['SKU']}")
+                self.on_error(f"Upload stopped on this SKU: {item.sku}")
                 break
 
             upload_countries = self.upload_config.upload_to
@@ -73,7 +73,7 @@ class Upload:
 
             # Reset image caches so each item gets a fresh upload
             for dest in self.all_dests:
-                dest.clear_image_cache(item["SKU"])
+                dest.clear_image_cache(item.sku)
 
             # Phase 1: upload images for each enabled destination sequentially.
             # EbaySiteDestinations all share one EbayImageStore, so only the first
@@ -83,7 +83,7 @@ class Upload:
             image_results = {}
             upload_failed = False
             for dest in enabled_dests:
-                images = dest.upload_images(item["Path"], item["SKU"], item["Title"], self.display)
+                images = dest.upload_images(item.path, item.sku, item.title, self.display)
                 print(images)
                 if images is None and (dest.fail_on_image_error or self.upload_mode.fast_images):
                     self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
@@ -115,11 +115,11 @@ class Upload:
                 if result.status == UploadStatus.FAILURE:
                     worst_error = UploadStatus.FAILURE
                     if result.message:
-                        self.display.push_error(result.message, item["SKU"])
+                        self.display.push_error(result.message, item.sku)
                 elif result.status == UploadStatus.WARNING and worst_error != UploadStatus.FAILURE:
                     worst_error = UploadStatus.WARNING
                     if result.message:
-                        self.display.push_error(result.message, item["SKU"])
+                        self.display.push_error(result.message, item.sku)
 
             self.display.set_item_status(self.listing_number - 1, worst_error)
             self.on_tick()
@@ -135,9 +135,9 @@ class Upload:
 
         error_line_nums = []
         for i, item in enumerate(self.item_list.items):
-            is_title_long = len(item["Title"]) > self.upload_config.max_title_length
-            is_price_over = float(item["Fixed Price eBay"]) > self.upload_config.max_price
-            is_price_under = float(item["Fixed Price eBay"]) < self.upload_config.min_price
+            is_title_long = len(item.title) > self.upload_config.max_title_length
+            is_price_over = float(item.price) > self.upload_config.max_price
+            is_price_under = float(item.price) < self.upload_config.min_price
 
             if any((is_title_long, is_price_under, is_price_over)):
                 error_line_nums.append(i)
@@ -155,7 +155,7 @@ class Upload:
             skus = [x.strip().upper() for x in raw.split(",")]
         else:
             skus = [x for x in chunkstring(raw.strip(), SKU_LENGTH)]
-        items = [item for item in self.item_list.items if item["SKU"].upper() in skus]
+        items = [item for item in self.item_list.items if item.sku.upper() in skus]
         if items:
             self.upload_items(items)
         else:
@@ -165,9 +165,9 @@ class Upload:
         start_point = None
         end_point = None
         for i, item in enumerate(self.item_list.items):
-            if item["SKU"].upper() in start.upper():
+            if item.sku.upper() in start.upper():
                 start_point = i
-            if end and item["SKU"].upper() in end.upper():
+            if end and item.sku.upper() in end.upper():
                 end_point = i
 
         if start_point is None:

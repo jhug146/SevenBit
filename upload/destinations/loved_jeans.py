@@ -92,7 +92,7 @@ class WebsiteDestination(Destination):
         for key, value in order:
             to_upload[value] = item[key]
 
-        to_upload["paths"] = ";" * (item["Path"].count(";") - 1)
+        to_upload["paths"] = ";" * (item.path.count(";") - 1)
         try:
             response = self.client.post(
                 self.upload_config.website_url + website_data["url"],

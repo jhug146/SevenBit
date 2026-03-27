@@ -51,7 +51,7 @@ class UploadDisplay(object):
                     item = country
                     break
 
-            for detail in ((74, item["Title"], 0),(12, item["SKU"], 1)):
+            for detail in ((74, item.title, 0),(12, item.sku, 1)):
                 tk.Label(self.content_frame, width=detail[0], height=1, text=detail[1], borderwidth=1, relief="solid").grid(row=i, column=detail[2])
             var = tk.StringVar(self.win, value="")
             var.set("Waiting")
@@ -87,7 +87,7 @@ class UploadDisplay(object):
         """
         self.upload.set_upload(True)  # This causes the upload to stop
         self.win.destroy()
-        self.upload.upload_begin = self.ui.item_list.items[self.upload.listing_number]["SKU"]
+        self.upload.upload_begin = self.ui.item_list.items[self.upload.listing_number].sku
         del self
 
     def recolour(self):

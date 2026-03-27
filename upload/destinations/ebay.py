@@ -156,20 +156,20 @@ class EbaySiteDestination(Destination):
         policies = self.accounts.policies(self.upload_config.name)
 
         item_specific_list = []
-        for detail in details:
+        for detail in details.specifics:
             prefix, suffix = detail[:3], detail[3:]
             if prefix == "IS_" and self.upload_config.translate_headers:
                 item_specific_list.append({
                     "Name": self.upload_config.is_names[suffix][self.site_num],
-                    "Value": details[detail]
+                    "Value": details.specifics[detail]
                 })
-            elif (prefix == "MU_" or (prefix == "IS_" and not self.upload_config.translate_headers)) and details[detail]:
+            elif (prefix == "MU_" or (prefix == "IS_" and not self.upload_config.translate_headers)) and details.specifics[detail]:
                 item_specific_list.append({
                     "Name": suffix,
-                    "Value": details[detail]
+                    "Value": details.specifics[detail]
                 })
 
-        html = details["eBay Description"].replace("&nbsp;", "")
+        html = details.ebay_description.replace("&nbsp;", "")
 
         if not policies["payment"][self.site_num]:
             return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message="You haven't specified a payment policy number for all the sites you're attempting to upload to on this account")
@@ -178,24 +178,24 @@ class EbaySiteDestination(Destination):
         shipping_id = policies["shipping"][self.site_num]
         returns_id = policies["returns"][self.site_num]
 
-        store_category = self.accounts.default_store_category or details["eBay Store Category1ID"]
+        store_category = self.accounts.default_store_category or details.store_category_id
         request = {
             "Item": {
-                "Title": details["Title"],
-                "SKU": details["SKU"],
+                "Title": details.title,
+                "SKU": details.sku,
                 "Description": f"<![CDATA[{html}]]>",
-                "ConditionDescription": details["eBay Condition Description"],
+                "ConditionDescription": details.condition_description,
                 "Country": self.upload_config.country,
                 "Location": self.upload_config.country,
                 "Site": self.SITE_ABBRS[self.site_num],
                 "SiteId": self.SITE_IDS[self.site_num],
                 "Currency": self.SITE_CURRS[self.site_num],
-                "ConditionID": details["eBay Condition"],
+                "ConditionID": details.ebay_condition,
                 "PrimaryCategory": {
-                    "CategoryID": str(details["eBay Category1ID"])
+                    "CategoryID": str(details.category_id)
                 },
                 "ListingDuration": "GTC",
-                "StartPrice": str(details["Fixed Price eBay"]),
+                "StartPrice": details.price,
                 "SellerProfiles": {
                     "SellerPaymentProfile":  {"PaymentProfileID":  payment_id},
                     "SellerShippingProfile": {"ShippingProfileID": shipping_id},

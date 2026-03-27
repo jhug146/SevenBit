@@ -187,7 +187,7 @@ class UI:
                     img_paths.insert(0, popped2)
                     img_paths.insert(0, popped1)
 
-                    self.item_list.items[n]["Path"] = ";".join(img_paths) + ";"
+                    self.item_list.items[n].path = ";".join(img_paths) + ";"
                     show_images()
 
             def delete_image(number):
@@ -198,7 +198,7 @@ class UI:
                 """
                 if len(img_paths) > 4:
                     img_paths.pop(number)
-                    self.item_list.items[n]["Path"] = ";".join(img_paths) + ";"
+                    self.item_list.items[n].path = ";".join(img_paths) + ";"
                     show_images()
 
             def place_image(path, row, col, count):
@@ -220,7 +220,7 @@ class UI:
                 box.bind("<Button 1>", lambda x=count: reorder(count))
                 box.bind("<Button 3>", lambda x=count: delete_image(count))
 
-            img_paths = self.item_list.items[n]["Path"].split(";")
+            img_paths = self.item_list.items[n].path.split(";")
             if img_paths[-1] == "":
                 img_paths.pop()
 
@@ -240,14 +240,14 @@ class UI:
                 self.item_list.items[n][self.CONDITION_HEADERS[i]] = condition_box.get("1.0", "end").strip().strip("\n")
                 middle.append(condition_box.get("1.0", "end").strip().strip("\n"))
 
-            self.item_list.items[n]["eBay Condition Description"] = self.upload_config.condition_opening + " ".join(middle) + self.upload_config.condition_closing
+            self.item_list.items[n].condition_description = self.upload_config.condition_opening + " ".join(middle) + self.upload_config.condition_closing
             for detail in var_dict.keys():
                 self.item_list.items[n][detail] = var_dict[detail].get()
 
             self.refresh_table(n)
 
         def single_item_upload():
-            self.upload.upload_skus(self.item_list.items[n]["SKU"])
+            self.upload.upload_skus(self.item_list.items[n].sku)
 
         displayed_details = self.upload_config.display_order
 

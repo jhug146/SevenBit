@@ -15,6 +15,8 @@ import time
 import requests
 import functools
 
+from state.item import Item
+
 
 def in_to_cm(value):
     return str(round(int(value) * 2.5))
@@ -82,7 +84,7 @@ class EbayTranslator:
 
                 if translation_data:
                     country_translation = {}
-                    for header,detail in item.items():
+                    for header,detail in item.to_dict().items():
                         detail_add = detail
                         if header in translation_data.keys():
                             for key,value in translation_data[header].items():
@@ -144,7 +146,8 @@ class EbayTranslator:
                 html = self.html_fix(country_translation, i)
                 if html != "error":
                     country_translation["eBay Description"] = html
-                    item_translation.append(country_translation)
+                    result = Item.from_dict(country_translation) if isinstance(country_translation, dict) else country_translation
+                    item_translation.append(result)
                 else:
                     item_translation.append(None)
 
