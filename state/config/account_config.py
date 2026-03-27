@@ -1,8 +1,11 @@
+from state.config.base_config import BaseConfig
 
-class AccountConfig:
+
+class AccountConfig(BaseConfig):
     def load(self, data):
         self._data = data
         self._current = data[data["default"]]
+        self._validate()
 
     @property
     def name(self): return self._current["name"]

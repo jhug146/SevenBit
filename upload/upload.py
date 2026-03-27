@@ -133,24 +133,21 @@ class Upload:
     def set_upload(self, value):
         self.stop_upload = value
 
-    def confirm_upload(self):
-        errors = False
-        line_nums = []
+    def request_upload(self):
         if not isinstance(self.item_list.items, list):
-            return None
+            return
 
-        requirements = self.upload_config.upload_requirements
+        error_line_nums = []
         for i, item in enumerate(self.item_list.items):
-            is_title_short = (len(item["Title"]) > requirements["max_title_length"])
-            is_price_over = (float(item["Fixed Price eBay"]) > requirements["max_price"])
-            is_price_under = (float(item["Fixed Price eBay"]) < requirements["min_price"])
+            is_title_long = len(item["Title"]) > self.upload_config.max_title_length
+            is_price_over = float(item["Fixed Price eBay"]) > self.upload_config.max_price
+            is_price_under = float(item["Fixed Price eBay"]) < self.upload_config.min_price
 
-            if any((is_title_short, is_price_under, is_price_over)):
-                line_nums.append(i)
-                errors = True
+            if any((is_title_long, is_price_under, is_price_over)):
+                error_line_nums.append(i)
 
-        if errors:
-            self.on_validation_error(line_nums, True)
+        if error_line_nums:
+            self.on_validation_error(error_line_nums, True)
         else:
             self.on_request_options(self, self.upload_begin)
 

@@ -71,7 +71,7 @@ upload_mode_dialog = UploadModeDialog(upload_changer)
 
 ui.init_buttons((
     functools.partial(import_file, ui),
-    upload.confirm_upload,
+    upload.request_upload,
     download_dialog.show,
     account_dialog.show,
     item_type_dialog.show,

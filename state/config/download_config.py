@@ -1,7 +1,10 @@
+from state.config.base_config import BaseConfig
 
-class DownloadConfig:
+
+class DownloadConfig(BaseConfig):
     def load(self, data):
         self._data = data
+        self._validate()
 
     @property
     def headers(self): return self._data["headers"]

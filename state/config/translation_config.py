@@ -1,7 +1,10 @@
+from state.config.base_config import BaseConfig
 
-class TranslationConfig:
+
+class TranslationConfig(BaseConfig):
     def load(self, data):
         self._data = data
+        self._validate()
 
     @property
     def fastforex_api_key(self): return self._data["fastforex-api-key"]

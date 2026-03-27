@@ -1,7 +1,10 @@
+from state.config.base_config import BaseConfig
 
-class UploadConfig:
+
+class UploadConfig(BaseConfig):
     def load(self, data):
         self._data = data
+        self._validate()
 
     @property
     def name(self): return self._data["name"]
@@ -10,7 +13,13 @@ class UploadConfig:
     def upload_to(self): return self._data["upload_to"]
 
     @property
-    def upload_requirements(self): return self._data["upload_requirements"]
+    def max_title_length(self): return self._data["upload_requirements"]["max_title_length"]
+
+    @property
+    def max_price(self): return self._data["upload_requirements"]["max_price"]
+
+    @property
+    def min_price(self): return self._data["upload_requirements"]["min_price"]
 
     @property
     def picture_data(self): return self._data["pictureData"]
