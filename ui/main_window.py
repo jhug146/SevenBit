@@ -6,7 +6,7 @@ import requests
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 
-from upload.upload_display import ScrollableFrame
+from ui.upload_display import ScrollableFrame
 from ui.utils import display_error
 
 

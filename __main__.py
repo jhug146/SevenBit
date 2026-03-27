@@ -4,7 +4,8 @@ Able to upload to lovedjeans website
 JSON file containing upload and translation data
 """
 from state import ItemType, UploadMode, ItemList
-from upload import EbayUpload, UploadDisplay, EbayTranslator
+from upload import EbayUpload, EbayTranslator
+from ui import UploadDisplay, display_error
 from download import GetItems
 from ui.main_window import UI
 from ui.utils import import_file
@@ -54,6 +55,7 @@ ebay_upload = EbayUpload(
     on_validation_error=ui.outline_item,
     on_request_options=ui.get_options,
     on_tick=ui.window.update,
+    on_error=display_error,
 )
 item_type.accounts.set_upload_attr(ebay_upload)
 ui.set_upload_attr(ebay_upload)

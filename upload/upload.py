@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 
 from upload.upload_result import UploadStatus
-from ui.utils import display_error
 
 
 def chunkstring(string, length):
@@ -13,7 +12,7 @@ SKU_LENGTH = 9
 
 class EbayUpload:
     def __init__(self, accounts, translator, display_factory, upload_changer, upload_config, destinations, item_list,
-                 on_validation_error, on_request_options, on_tick):
+                 on_validation_error, on_request_options, on_tick, on_error):
         self.accounts = accounts
         self.upload_config = upload_config
         self.upload_mode = upload_changer
@@ -26,6 +25,7 @@ class EbayUpload:
         self.on_validation_error = on_validation_error
         self.on_request_options = on_request_options
         self.on_tick = on_tick
+        self.on_error = on_error
 
     def update_connections(self):
         for dest in self.all_dests:
@@ -50,7 +50,7 @@ class EbayUpload:
             item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
             if self.stop_upload:
                 self.stop_upload = False
-                display_error(f"Upload stopped on this SKU: {item['SKU']}")
+                self.on_error(f"Upload stopped on this SKU: {item['SKU']}")
                 break
 
             if self.accounts.default_uploads:
@@ -160,7 +160,7 @@ class EbayUpload:
             if items:
                 self.upload_items(items)
             else:
-                display_error("None of these SKUs were found")
+                self.on_error("None of these SKUs were found")
 
         # Starting point upload
         elif upload_type == 2:
@@ -173,11 +173,11 @@ class EbayUpload:
                     end_point = i
 
             if start_point is None:
-                display_error("The start SKU was not found")
+                self.on_error("The start SKU was not found")
                 return None
 
             if extra_info and not end_point:
-                display_error("The end SKU was not found")
+                self.on_error("The end SKU was not found")
                 return None
 
             if end_point:
