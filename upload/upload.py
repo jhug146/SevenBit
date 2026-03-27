@@ -154,43 +154,38 @@ class Upload:
         else:
             self.on_request_options(self, self.upload_begin)
 
-    def start_upload(self, upload_type, info, extra_info=None):
-        # Normal upload
-        if upload_type == 0:
-            self.upload_items(self.item_list.items)
+    def upload_all(self):
+        self.upload_items(self.item_list.items)
 
-        # Specific SKUs upload
-        elif upload_type == 1:
-            if "," in info:
-                skus = [x.upper() for x in info.split(",")]
-            else:
-                info = info.strip()
-                skus = [x for x in chunkstring(info, SKU_LENGTH)]
-            items = [item for item in self.item_list.items if (item["SKU"].upper() in skus)]
-            if items:
-                self.upload_items(items)
-            else:
-                self.on_error("None of these SKUs were found")
+    def upload_skus(self, raw: str):
+        if "," in raw:
+            skus = [x.strip().upper() for x in raw.split(",")]
+        else:
+            skus = [x for x in chunkstring(raw.strip(), SKU_LENGTH)]
+        items = [item for item in self.item_list.items if item["SKU"].upper() in skus]
+        if items:
+            self.upload_items(items)
+        else:
+            self.on_error("None of these SKUs were found")
 
-        # Starting point upload
-        elif upload_type == 2:
-            start_point = None
-            end_point = None
-            for i, item in enumerate(self.item_list.items):
-                if item["SKU"].upper() in info.upper():
-                    start_point = i
-                if extra_info and item["SKU"].upper() in extra_info.upper():
-                    end_point = i
+    def upload_from(self, start: str, end: str = ""):
+        start_point = None
+        end_point = None
+        for i, item in enumerate(self.item_list.items):
+            if item["SKU"].upper() in start.upper():
+                start_point = i
+            if end and item["SKU"].upper() in end.upper():
+                end_point = i
 
-            if start_point is None:
-                self.on_error("The start SKU was not found")
-                return None
+        if start_point is None:
+            self.on_error("The start SKU was not found")
+            return
 
-            if extra_info and not end_point:
-                self.on_error("The end SKU was not found")
-                return None
+        if end and end_point is None:
+            self.on_error("The end SKU was not found")
+            return
 
-            if end_point:
-                self.upload_items(self.item_list.items[start_point : end_point + 1])
-            else:
-                self.upload_items(self.item_list.items[start_point:])
+        if end_point is not None:
+            self.upload_items(self.item_list.items[start_point : end_point + 1])
+        else:
+            self.upload_items(self.item_list.items[start_point:])

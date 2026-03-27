@@ -247,7 +247,7 @@ class UI:
             self.refresh_table(n)
 
         def single_item_upload():
-            self.upload.start_upload(1, self.item_list.items[n]["SKU"])
+            self.upload.upload_skus(self.item_list.items[n]["SKU"])
 
         displayed_details = self.upload_config.display_order
 
@@ -339,15 +339,15 @@ class UI:
 
         def normal():
             self.options_win.destroy()
-            upload_obj.start_upload(0, None)
+            upload_obj.upload_all()
 
         def specific():
             self.options_win.destroy()
-            upload_obj.start_upload(1, self.specific_var.get())
+            upload_obj.upload_skus(self.specific_var.get())
 
         def start_point():
             self.options_win.destroy()
-            upload_obj.start_upload(2, self.start_point_var.get(), self.end_point_var.get())
+            upload_obj.upload_from(self.start_point_var.get(), self.end_point_var.get())
 
         tk.Button(self.options_win, width=15, bg="#146e72", fg="white", font=self.small_font, text="Normal Upload", command=normal).place(x=5, y=5)
 
