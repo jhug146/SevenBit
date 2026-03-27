@@ -6,7 +6,8 @@ JSON file containing upload and translation data
 import tkinter as tk
 from tkinter import messagebox
 
-from state import ItemType, UploadMode, ItemList
+from state import ItemType, UploadMode
+from upload.models import ItemList
 from upload import Upload, EbayTranslator, UploadCallbacks
 from ui import UploadDisplay, display_error
 from download import GetItems

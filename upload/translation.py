@@ -15,7 +15,7 @@ import time
 import requests
 import functools
 
-from state.item import Item
+from upload.models.item import Item
 
 
 def in_to_cm(value):

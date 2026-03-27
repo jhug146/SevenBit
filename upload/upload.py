@@ -3,7 +3,7 @@ import threading
 from dataclasses import dataclass
 from typing import Callable
 
-from upload.upload_result import UploadStatus
+from upload.models.upload_result import UploadStatus
 
 
 @dataclass

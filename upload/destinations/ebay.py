@@ -6,7 +6,7 @@ import time
 
 from upload.destinations.image_store import ImageStore
 from upload.destinations.base import Destination
-from upload.upload_result import UploadResult, ImageUploadResult, UploadStatus
+from upload.models.upload_result import UploadResult, ImageUploadResult, UploadStatus
 
 
 class EbayImageStore:

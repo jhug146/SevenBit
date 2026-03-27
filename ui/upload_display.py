@@ -1,5 +1,5 @@
 import tkinter as tk
-from upload.upload_result import UploadStatus
+from upload.models.upload_result import UploadStatus
 
 
 class UploadDisplay(object):

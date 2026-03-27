@@ -4,7 +4,7 @@ import requests
 
 from upload.destinations.image_store import ImageStore
 from upload.destinations.base import Destination
-from upload.upload_result import UploadResult, UploadStatus
+from upload.models.upload_result import UploadResult, UploadStatus
 
 
 class WebsiteDestination(Destination):

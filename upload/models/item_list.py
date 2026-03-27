@@ -1,4 +1,4 @@
-from state.item import Item
+from upload.models.item import Item
 
 
 class ItemList:
