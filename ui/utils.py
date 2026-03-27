@@ -3,8 +3,6 @@ import tkinter.filedialog
 import win32api
 import csv
 
-from state.item import Item
-
 
 def display_error(message, message_type="Error"):
     win32api.MessageBox(0, message, message_type)
@@ -40,11 +38,5 @@ def import_file(ui):
         display_error(f"An error occured when importing the file: {filename}")
         return None
 
-    item_dicts = [{} for _ in range(len(items))]
-    for i, item in enumerate(items):
-        for j, header in enumerate(headers):
-            if header:
-                key = header[2:] if header[:1] == "C:" else header
-                item_dicts[i][key] = item[j]
-    ui.item_list.items = [Item.from_dict(d) for d in item_dicts]
+    ui.item_list.load(headers, items)
     ui.show_items()
