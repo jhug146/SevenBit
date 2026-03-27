@@ -4,7 +4,7 @@ Able to upload to lovedjeans website
 JSON file containing upload and translation data
 """
 from state import ItemType, UploadMode, ItemList
-from upload import EbayUpload, EbayTranslator
+from upload import Upload, EbayTranslator, UploadCallbacks
 from ui import UploadDisplay, display_error
 from download import GetItems
 from ui.main_window import UI
@@ -48,17 +48,20 @@ ebay_image_store.set_fast_source(website_dest.upload_images)
 
 upload_changer.register(destinations)
 
-display_factory = lambda listings, upload: UploadDisplay(listings, ui, upload)
+make_display = lambda listings, upload: UploadDisplay(listings, ui, upload)
 
-ebay_upload = EbayUpload(
-    item_type.accounts, translator, display_factory, upload_changer, item_type.upload, destinations, item_list,
+upload_callbacks = UploadCallbacks(
     on_validation_error=ui.outline_item,
     on_request_options=ui.get_options,
     on_tick=ui.window.update,
     on_error=display_error,
 )
-item_type.accounts.set_upload_attr(ebay_upload)
-ui.set_upload_attr(ebay_upload)
+upload = Upload(
+    item_type.accounts, translator, make_display, upload_changer, item_type.upload, destinations, item_list,
+    upload_callbacks,
+)
+item_type.accounts.set_upload_attr(upload)
+ui.set_upload_attr(upload)
 get_items = GetItems(item_type.accounts, item_type.download, upload_changer)
 
 account_dialog = AccountDialog(item_type.accounts, on_success=lambda: ui.update_title(item_type.accounts))
@@ -68,7 +71,7 @@ upload_mode_dialog = UploadModeDialog(upload_changer)
 
 ui.init_buttons((
     functools.partial(import_file, ui),
-    ebay_upload.confirm_upload,
+    upload.confirm_upload,
     download_dialog.show,
     account_dialog.show,
     item_type_dialog.show,

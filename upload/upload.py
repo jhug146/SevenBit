@@ -1,7 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
 import threading
+from dataclasses import dataclass
+from typing import Callable
 
 from upload.upload_result import UploadStatus
+
+
+@dataclass
+class UploadCallbacks:
+    on_validation_error: Callable
+    on_request_options: Callable
+    on_tick: Callable
+    on_error: Callable
 
 
 def chunkstring(string, length):
@@ -10,22 +20,22 @@ def chunkstring(string, length):
 SKU_LENGTH = 9
 
 
-class EbayUpload:
-    def __init__(self, accounts, translator, display_factory, upload_changer, upload_config, destinations, item_list,
-                 on_validation_error, on_request_options, on_tick, on_error):
+class Upload:
+    def __init__(self, accounts, translator, make_display, upload_changer, upload_config, destinations, item_list,
+                 upload_callbacks: UploadCallbacks):
         self.accounts = accounts
         self.upload_config = upload_config
         self.upload_mode = upload_changer
         self.item_list = item_list
         self.translator = translator
-        self.display_factory = display_factory
+        self.make_display = make_display
         self.all_dests = destinations
         self.stop_upload = False
         self.upload_begin = ""
-        self.on_validation_error = on_validation_error
-        self.on_request_options = on_request_options
-        self.on_tick = on_tick
-        self.on_error = on_error
+        self.on_validation_error = upload_callbacks.on_validation_error
+        self.on_request_options = upload_callbacks.on_request_options
+        self.on_tick = upload_callbacks.on_tick
+        self.on_error = upload_callbacks.on_error
 
     def update_connections(self):
         for dest in self.all_dests:
@@ -40,7 +50,7 @@ class EbayUpload:
         listings = self.translator.translate(en_listings)
 
         print("Uploading...")
-        self.display = self.display_factory(listings, self)
+        self.display = self.make_display(listings, self)
 
         self.length = len(listings)
         self.listing_number = 0

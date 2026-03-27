@@ -328,7 +328,7 @@ class UI:
         normal - Starts from the first item in the file
         specific - Uploads only the specified SKUs
         start_point - Starts from the specified SKU
-        :param upload_obj: EbayUpload object
+        :param upload_obj: Upload object
         :param start: string
         :return: None
         """
