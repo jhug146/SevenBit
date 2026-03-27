@@ -1,0 +1,5 @@
+deep-translator==1.11.4
+Pillow==10.2.0
+requests==2.31.0
+ebaysdk==2.2.0
+pywin32==306
