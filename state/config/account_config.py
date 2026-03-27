@@ -23,7 +23,7 @@ class AccountConfig(BaseConfig):
     def token(self): return self._current["credentials"]["token"]
 
     @property
-    def default_uploads(self): return self._current["default_uploads"]
+    def allowed_destinations(self): return self._current.get("allowed_destinations")
 
     @property
     def default_store_category(self): return self._current.get("default_store_category")

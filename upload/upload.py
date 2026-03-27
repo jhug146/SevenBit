@@ -40,6 +40,7 @@ class Upload:
     def update_connections(self):
         for dest in self.all_dests:
             dest.update_connection()
+        self.upload_mode.apply_allowed_destinations(self.accounts.allowed_destinations)
 
     def upload_items(self, en_listings):
         self.items_thread = threading.Thread(target=self.upload_items_thread, args=(en_listings,))
@@ -52,7 +53,6 @@ class Upload:
         print("Uploading...")
         self.display = self.make_display(listings, self)
 
-        self.length = len(listings)
         self.listing_number = 0
 
         for item_batch in listings:
@@ -63,11 +63,7 @@ class Upload:
                 self.on_error(f"Upload stopped on this SKU: {item['SKU']}")
                 break
 
-            if self.accounts.default_uploads:
-                upload_countries = self.accounts.default_uploads
-            else:
-                upload_countries = self.upload_config.upload_to
-
+            upload_countries = self.upload_config.upload_to
             enabled_dests = [
                 d for d in self.all_dests
                 if d.name in upload_countries

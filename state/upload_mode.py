@@ -21,6 +21,16 @@ class UploadMode:
         self._website_dests = [d for d in all_dests if d.name not in self.ebay_options]
         self._website_state = {dest.name: (dest.name in upload_to) for dest in self._website_dests}
 
+    def apply_allowed_destinations(self, allowed):
+        if allowed is None:
+            return
+        for i, opt in enumerate(self.ebay_options):
+            if opt not in allowed:
+                self.upload_state[i] = 0
+        for name in self._website_state:
+            if name not in allowed:
+                self._website_state[name] = False
+
     def is_destination_enabled(self, name: str) -> bool:
         if name in self.ebay_options:
             return bool(self.upload_state[self.ebay_options.index(name)])

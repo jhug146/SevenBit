@@ -76,7 +76,7 @@ get_items = GetItems(item_type.accounts, item_type.download, upload_changer)
 account_dialog = AccountDialog(item_type.accounts, on_success=lambda: ui.update_title(item_type.accounts))
 item_type_dialog = ItemTypeDialog(item_type, on_success=lambda: ui.update_title(item_type.accounts))
 download_dialog = DownloadDialog(ui.window, get_items)
-upload_mode_dialog = UploadModeDialog(upload_changer)
+upload_mode_dialog = UploadModeDialog(upload_changer, item_type.accounts)
 
 ui.init_buttons((
     functools.partial(import_file, ui),
