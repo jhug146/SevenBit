@@ -129,12 +129,7 @@ class EbayTranslator:
                     if gt_code == "it" or (gt_code == "de" and item["IS_Department"] == "Men"):
                         country_translation["IS_Size"] = "W" + country_translation["IS_Size"]
 
-                    concat_condition = []
-                    for condition_name in self.translation_config.condition_translation.keys():
-                        condition = country_translation[condition_name]
-                        if condition and condition != " ":
-                            concat_condition.append(condition)
-                    country_translation["eBay Condition Description"] = self.translation_config.condition_openers[i] + " ••••• ".join(concat_condition)
+                    country_translation["condition_opener"] = self.translation_config.condition_openers[i]
 
                     country_translation["Fixed Price eBay"] = self.currency_change(float(country_translation["Fixed Price eBay"]), self.translation_config.currency_codes[i])
                     country_translation["IS_Department"] = country_translation["IS_Department"].replace("DaHerren", "Damen")

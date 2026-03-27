@@ -169,7 +169,7 @@ class EbaySiteDestination(Destination):
                     "Value": details.specifics[detail]
                 })
 
-        html = details.ebay_description.replace("&nbsp;", "")
+        html = details.html.replace("&nbsp;", "")
 
         if not policies["payment"][self.site_num]:
             return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message="You haven't specified a payment policy number for all the sites you're attempting to upload to on this account")
@@ -178,7 +178,7 @@ class EbaySiteDestination(Destination):
         shipping_id = policies["shipping"][self.site_num]
         returns_id = policies["returns"][self.site_num]
 
-        store_category = self.accounts.default_store_category or details.store_category_id
+        store_category = self.accounts.store_category
         request = {
             "Item": {
                 "Title": details.title,

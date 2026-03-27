@@ -26,7 +26,7 @@ class AccountConfig(BaseConfig):
     def allowed_destinations(self): return self._current.get("allowed_destinations")
 
     @property
-    def default_store_category(self): return self._current.get("default_store_category")
+    def store_category(self): return self._current["store_category"]
 
     def policies(self, item_type_name): return self._current["policies"][item_type_name]
 

@@ -2,19 +2,21 @@ from dataclasses import dataclass, field
 
 
 _FIELD_MAP = {
-    "Title":                      "title",
-    "SKU":                        "sku",
-    "Fixed Price eBay":           "price",
-    "Path":                       "path",
-    "eBay Description":           "ebay_description",
-    "eBay Condition Description": "condition_description",
-    "eBay Condition":             "ebay_condition",
-    "eBay Category1ID":           "category_id",
-    "eBay Store Category1ID":     "store_category_id",
-    "Condition 1":                "condition_1",
-    "Condition 2":                "condition_2",
-    "Condition 4 (Free Text)":    "condition_4",
+    "Title":            "title",
+    "SKU":              "sku",
+    "Fixed Price eBay": "price",
+    "Path":             "images",
+    "eBay Description": "html",
+    "eBay Condition":   "ebay_condition",
+    "eBay Category1ID": "category_id",
+    "condition_opener": "condition_opener",
 }
+
+_CONDITION_KEYS = (
+    "Condition 1",
+    "Condition 2",
+    "Condition 4 (Free Text)",
+)
 
 
 @dataclass
@@ -22,42 +24,46 @@ class Item:
     title: str = ""
     sku: str = ""
     price: str = ""
-    path: str = ""
-    ebay_description: str = ""
-    condition_description: str = ""
+    images: str = ""
+    html: str = ""
     ebay_condition: str = ""
     category_id: str = ""
-    store_category_id: str = ""
-    condition_1: str = ""
-    condition_2: str = ""
-    condition_4: str = ""
+    condition_opener: str = ""
+    conditions: list = field(default_factory=list)
     specifics: dict = field(default_factory=dict)
+
+    @property
+    def condition_description(self) -> str:
+        parts = [c for c in self.conditions if c and c != " "]
+        return self.condition_opener + " ••••• ".join(parts)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Item":
         kwargs = {}
         specifics = {}
+        conditions = ["", "", ""]
         for key, value in data.items():
             if key in _FIELD_MAP:
                 kwargs[_FIELD_MAP[key]] = value
+            elif key in _CONDITION_KEYS:
+                conditions[_CONDITION_KEYS.index(key)] = value
             else:
                 specifics[key] = value
-        return cls(**kwargs, specifics=specifics)
+        return cls(**kwargs, conditions=conditions, specifics=specifics)
 
     def to_dict(self) -> dict:
+        conditions = self.conditions + [""] * (3 - len(self.conditions))
         result = {
             "Title":                      self.title,
             "SKU":                        self.sku,
             "Fixed Price eBay":           self.price,
-            "Path":                       self.path,
-            "eBay Description":           self.ebay_description,
-            "eBay Condition Description": self.condition_description,
+            "Path":                       self.images,
+            "eBay Description":           self.html,
             "eBay Condition":             self.ebay_condition,
             "eBay Category1ID":           self.category_id,
-            "eBay Store Category1ID":     self.store_category_id,
-            "Condition 1":                self.condition_1,
-            "Condition 2":                self.condition_2,
-            "Condition 4 (Free Text)":    self.condition_4,
+            "Condition 1":                conditions[0],
+            "Condition 2":                conditions[1],
+            "Condition 4 (Free Text)":    conditions[2],
         }
         result.update(self.specifics)
         return result
@@ -65,16 +71,24 @@ class Item:
     def __getitem__(self, name: str) -> str:
         if name in _FIELD_MAP:
             return getattr(self, _FIELD_MAP[name])
+        if name in _CONDITION_KEYS:
+            i = _CONDITION_KEYS.index(name)
+            return self.conditions[i] if i < len(self.conditions) else ""
         return self.specifics[name]
 
     def __setitem__(self, name: str, value: str):
         if name in _FIELD_MAP:
             setattr(self, _FIELD_MAP[name], value)
+        elif name in _CONDITION_KEYS:
+            i = _CONDITION_KEYS.index(name)
+            while len(self.conditions) <= i:
+                self.conditions.append("")
+            self.conditions[i] = value
         else:
             self.specifics[name] = value
 
     def keys(self):
-        return list(_FIELD_MAP.keys()) + list(self.specifics.keys())
+        return list(_FIELD_MAP.keys()) + list(_CONDITION_KEYS) + list(self.specifics.keys())
 
     def __len__(self):
-        return len(_FIELD_MAP) + len(self.specifics)
+        return len(_FIELD_MAP) + len(_CONDITION_KEYS) + len(self.specifics)

@@ -187,7 +187,7 @@ class UI:
                     img_paths.insert(0, popped2)
                     img_paths.insert(0, popped1)
 
-                    self.item_list.items[n].path = ";".join(img_paths) + ";"
+                    self.item_list.items[n].images = ";".join(img_paths) + ";"
                     show_images()
 
             def delete_image(number):
@@ -198,7 +198,7 @@ class UI:
                 """
                 if len(img_paths) > 4:
                     img_paths.pop(number)
-                    self.item_list.items[n].path = ";".join(img_paths) + ";"
+                    self.item_list.items[n].images = ";".join(img_paths) + ";"
                     show_images()
 
             def place_image(path, row, col, count):
@@ -220,7 +220,7 @@ class UI:
                 box.bind("<Button 1>", lambda x=count: reorder(count))
                 box.bind("<Button 3>", lambda x=count: delete_image(count))
 
-            img_paths = self.item_list.items[n].path.split(";")
+            img_paths = self.item_list.items[n].images.split(";")
             if img_paths[-1] == "":
                 img_paths.pop()
 
@@ -235,12 +235,8 @@ class UI:
             Save the current layout of the images
             :return: None
             """
-            middle = []
             for i, condition_box in enumerate(condition_boxes):
                 self.item_list.items[n][self.CONDITION_HEADERS[i]] = condition_box.get("1.0", "end").strip().strip("\n")
-                middle.append(condition_box.get("1.0", "end").strip().strip("\n"))
-
-            self.item_list.items[n].condition_description = self.upload_config.condition_opening + " ".join(middle) + self.upload_config.condition_closing
             for detail in var_dict.keys():
                 self.item_list.items[n][detail] = var_dict[detail].get()
 

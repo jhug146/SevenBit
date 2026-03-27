@@ -83,7 +83,7 @@ class Upload:
             image_results = {}
             upload_failed = False
             for dest in enabled_dests:
-                images = dest.upload_images(item.path, item.sku, item.title, self.display)
+                images = dest.upload_images(item.images, item.sku, item.title, self.display)
                 print(images)
                 if images is None and (dest.fail_on_image_error or self.upload_mode.fast_images):
                     self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
