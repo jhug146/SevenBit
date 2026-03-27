@@ -6,7 +6,6 @@ import os
 import csv
 import json
 import requests
-from ui.utils import display_error
 
 
 ITEM_NUMBER_LENGTH = 12
@@ -50,10 +49,11 @@ def split_numbers(nums):
 
 class GetItems(object):
     UPLOAD_BATCH_SIZE = 20
-    def __init__(self, accounts, download_config, upload_changer):
+    def __init__(self, accounts, download_config, upload_changer, on_error):
         self.accounts = accounts
         self.download_config = download_config
         self.upload_mode = upload_changer
+        self.on_error = on_error
 
         self.connection = ShoppingConnection(
             config_file = None,
@@ -82,7 +82,7 @@ class GetItems(object):
         print(response)
         if "Item" not in response:
             error = "One or more of the entered item ids were invalid" if response["Errors"]["ShortMessage"] == "Invalid item ID." else json.dumps(response["Errors"])
-            display_error(error)
+            self.on_error(error)
             return None
 
         item_list = response["Item"] if type(response["Item"]) is list else [response["Item"]]
@@ -152,7 +152,7 @@ class GetItems(object):
         try:
             os.mkdir(self.folder)
         except FileNotFoundError:
-            display_error(f"Save location not found {self.folder} please check your accounts.csv file")
+            self.on_error(f"Save location not found {self.folder} please check your accounts.csv file")
             return None
         return self.folder
 
@@ -172,7 +172,7 @@ class GetItems(object):
             write_csv(save_file, data)
             os.system(f"start excel.exe {save_file}")
         except PermissionError:
-            display_error("Please close the ebay-import.csv file before attempting to download into it")
+            self.on_error("Please close the ebay-import.csv file before attempting to download into it")
 
     def get_images(self, urls):
         """

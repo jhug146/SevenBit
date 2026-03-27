@@ -71,7 +71,7 @@ upload = Upload(
 )
 item_type.accounts.set_upload_attr(upload)
 ui.set_upload_attr(upload)
-get_items = GetItems(item_type.accounts, item_type.download, upload_changer)
+get_items = GetItems(item_type.accounts, item_type.download, upload_changer, on_error=display_error)
 
 account_dialog = AccountDialog(item_type.accounts, on_success=lambda: ui.update_title(item_type.accounts))
 item_type_dialog = ItemTypeDialog(item_type, on_success=lambda: ui.update_title(item_type.accounts))
