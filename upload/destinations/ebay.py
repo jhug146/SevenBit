@@ -163,7 +163,7 @@ class EbaySiteDestination(Destination):
                     "Name": self.upload_config.is_names[suffix][self.site_num],
                     "Value": details.specifics[detail]
                 })
-            elif (prefix == "MU_" or (prefix == "IS_" and not self.upload_config.translate_headers)) and details.specifics[detail]:
+            elif prefix == "IS_" and not self.upload_config.translate_headers and details.specifics[detail]:
                 item_specific_list.append({
                     "Name": suffix,
                     "Value": details.specifics[detail]
