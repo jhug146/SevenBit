@@ -3,6 +3,9 @@ SevenBit v10
 Able to upload to lovedjeans website
 JSON file containing upload and translation data
 """
+import tkinter as tk
+from tkinter import messagebox
+
 from state import ItemType, UploadMode, ItemList
 from upload import Upload, EbayTranslator, UploadCallbacks
 from ui import UploadDisplay, display_error
@@ -19,7 +22,13 @@ import multiprocessing
 import functools
 
 
-item_type = ItemType()
+try:
+    item_type = ItemType()
+except KeyError as e:
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showerror("Configuration Error", str(e))
+    raise SystemExit
 upload_changer = UploadMode(item_type.upload, EbaySiteDestination.LABELS, EbaySiteDestination.OPTION_KEYS)
 item_list = ItemList()
 ui = UI(item_type.upload, item_list)
