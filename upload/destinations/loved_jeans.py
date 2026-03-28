@@ -64,7 +64,8 @@ class WebsiteDestination(Destination):
                         images[f"file{i}"] = f.read()
                 response = self.client.post(url, data=data, files=images)
 
-            result = json.loads(response.text[27:])   # cuts off the "Success - Images Uploaded" bit
+            result = json.loads(response.text[len("Success - Images Uploaded"):])
+
             if isinstance(result, list):
                 return result
             raise Exception(f"Image upload error - Unable to parse {response.text}")
