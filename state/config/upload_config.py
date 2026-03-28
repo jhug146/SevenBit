@@ -65,3 +65,6 @@ class UploadConfig(BaseConfig):
 
     @property
     def vinted_profile_dir(self): return self._data["vinted_profile_dir"]
+
+    @property
+    def category_id_map(self): return self._data["category_id_map"]

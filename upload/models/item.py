@@ -8,7 +8,6 @@ _FIELD_MAP = {
     "Path":                       "images",
     "eBay Description":           "html",
     "eBay Condition":             "ebay_condition",
-    "eBay Category1ID":           "category_id",
     "condition_opener":           "condition_opener",
     "eBay Condition Description": "condition_description_raw",
 }
@@ -28,7 +27,6 @@ class Item:
     images: str = ""
     html: str = ""
     ebay_condition: str = ""
-    category_id: str = ""
     condition_opener: str = ""
     condition_description_raw: str = ""
     conditions: list = field(default_factory=list)
@@ -64,7 +62,6 @@ class Item:
             "Path":                       self.images,
             "eBay Description":           self.html,
             "eBay Condition":             self.ebay_condition,
-            "eBay Category1ID":           self.category_id,
             "Condition 1":                conditions[0],
             "Condition 2":                conditions[1],
             "Condition 4 (Free Text)":    conditions[2],

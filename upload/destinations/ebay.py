@@ -208,7 +208,7 @@ class EbaySiteDestination(Destination):
                 "Currency": self.site.currency,
                 "ConditionID": details.ebay_condition,
                 "PrimaryCategory": {
-                    "CategoryID": str(details.category_id)
+                    "CategoryID": self.upload_config.category_id_map[details["IS_Department"]]
                 },
                 "ListingDuration": "GTC",
                 "StartPrice": details.price,
