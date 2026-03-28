@@ -51,23 +51,21 @@ class Upload:
         self.display = self.make_display(listings, self)
 
         for self.listing_number, item_batch in enumerate(listings, 1):
-            item = item_batch[1] if len(item_batch) > 1 else item_batch[0]
-
             if self.stop_upload:
                 self.stop_upload = False
-                self.on_error(f"Upload stopped on this SKU: {item.sku}")
+                self.on_error(f"Upload stopped on this SKU: {item_batch.sku}")
                 break
 
             enabled_dests = self._enabled_dests(item_batch)
             for dest in self.all_dests:
-                dest.clear_image_cache(item.sku)
+                dest.clear_image_cache(item_batch.sku)
 
-            image_results = self._upload_images(item, enabled_dests)
+            image_results = self._upload_images(item_batch, enabled_dests)
             if image_results is None:
                 continue
 
             feedback = self._upload_items_parallel(item_batch, enabled_dests, image_results)
-            worst_error = self._process_feedback(feedback, item.sku)
+            worst_error = self._process_feedback(feedback, item_batch.sku)
             self.display.set_item_status(self.listing_number - 1, worst_error)
             self.on_tick()
 
@@ -79,13 +77,13 @@ class Upload:
             and d.has_data(item_batch)
         ]
 
-    def _upload_images(self, item, enabled_dests):
+    def _upload_images(self, item_batch, enabled_dests):
         # EbaySiteDestinations share one EbayImageStore so only the first triggers
         # a real upload — the rest return the cached result instantly. WebsiteDestination
         # also caches, so it uploads at most once even in fast_images mode.
         image_results = {}
         for dest in enabled_dests:
-            images = dest.upload_images(item.images, item.sku, item.title, self.display)
+            images = dest.upload_images(item_batch.images, item_batch.sku, item_batch.title, self.display)
             if images is None and (dest.fail_on_image_error or self.upload_mode.fast_images):
                 self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
                 return None
@@ -95,7 +93,7 @@ class Upload:
     def _upload_items_parallel(self, item_batch, enabled_dests, image_results):
         with ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(dest.upload_item, item_batch, image_results[dest], self.listing_number, self.display)
+                executor.submit(dest.upload_item, item_batch, image_results[dest], self.listing_number)
                 for dest in enabled_dests
             ]
         return [f.result() for f in futures]

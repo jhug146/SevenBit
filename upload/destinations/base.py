@@ -22,7 +22,7 @@ class Destination(ABC):
         ...
 
     @abstractmethod
-    def upload_item(self, item_batch: list, images: list | None, listing_number: int, display):
+    def upload_item(self, item_batch, images: list | None, listing_number: int):
         """Upload item data. Returns an UploadResult."""
         ...
 

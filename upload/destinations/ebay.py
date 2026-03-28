@@ -127,7 +127,7 @@ class EbaySiteDestination(Destination):
     def label(self) -> str:
         return self.LABELS[self.site_num]
 
-    def has_data(self, item_batch: list) -> bool:
+    def has_data(self, item_batch) -> bool:
         return self.site_num < len(item_batch) and bool(item_batch[self.site_num])
 
     def clear_image_cache(self, sku: str):
@@ -148,10 +148,8 @@ class EbaySiteDestination(Destination):
     def upload_images(self, paths: str, sku: str, title: str, display) -> list | None:
         return self.image_store.get_images(paths, sku, title, display)
 
-    def upload_item(self, item_batch: list, images: list | None, listing_number: int, display) -> UploadResult:
+    def upload_item(self, item_batch, images: list | None, listing_number: int) -> UploadResult:
         details = item_batch[self.site_num]
-        if len(details) == 1:
-            details = details[0]
 
         policies = self.accounts.policies(self.upload_config.name)
 

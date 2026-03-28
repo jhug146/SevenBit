@@ -16,6 +16,7 @@ import requests
 import functools
 
 from upload.models.item import Item
+from upload.models.item_batch import ItemBatch
 
 
 def in_to_cm(value):
@@ -146,7 +147,7 @@ class EbayTranslator:
                 else:
                     item_translation.append(None)
 
-            translated_items.append(item_translation)
+            translated_items.append(ItemBatch(item_translation))
         return translated_items
 
     def currency_change(self, amount, currency):

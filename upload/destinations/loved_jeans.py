@@ -34,65 +34,53 @@ class WebsiteDestination(Destination):
     def clear_image_cache(self, sku: str):
         self._image_store.clear(sku)
 
-    def upload_images(self, paths: str, sku: str, title: str, display, no_urls: bool = False) -> list | None:
-        # no_urls=True is a special caller-side flag that changes the return type.
-        # Bypass the cache so a no_urls call never pollutes the cached list result.
-        if no_urls:
-            return self._do_upload_images(paths, sku, title, display, no_urls=True)
+    def upload_images(self, paths: str, sku: str, title: str, display) -> list | None:
         return self._image_store.get(sku, self._do_upload_images, paths, sku, title, display)
 
-    def _do_upload_images(self, paths: str, sku: str, title: str, display, no_urls: bool = False) -> list | None:
+    def _do_upload_images(self, paths: str, sku: str, title: str, display) -> list | None:
         website_data = self.upload_config.website_images
-        URL = self.upload_config.website_url + website_data["url"]
+        url = self.upload_config.website_url + website_data["url"]
 
         path_list = paths.split(";")
-        if path_list[-1] == "":
+        while path_list[-1] == "":
             path_list.pop()
 
-        try:
-            if "http" in path_list[0]:
-                urls = json.dumps(path_list)
-            else:
-                urls = "file"
+        using_urls = "http" in path_list[0]
+        data = {
+            "username": website_data["username"],
+            "password": website_data["password"],
+            "sku": sku,
+            "title": title,
+            "urls": json.dumps(path_list) if using_urls else "file"
+        }
 
-            data = {
-                "username": website_data["username"],
-                "password": website_data["password"],
-                "sku": sku,
-                "title": title,
-                "urls": urls
-            }
-            if "http" in path_list[0]:
-                response = self.client.post(URL, data=data)
+        try:
+            if using_urls:
+                response = self.client.post(url, data=data)
             else:
                 images = {}
                 for i, name in enumerate(path_list):
                     with open(pathlib.Path(name), "rb") as f:
                         images[f"file{i}"] = f.read()
-                response = self.client.post(URL, data=data, files=images)
+                response = self.client.post(url, data=data, files=images)
 
-            if no_urls:
-                return response.text[:7]
-
-            urls = json.loads(response.text[27:])   # cuts off the "Success - Images Uploaded" bit
-            if type(urls) is list:
-                return urls
-            else:
-                raise Exception(f"Image upload error - Unable to parse {response.text}")
+            result = json.loads(response.text[27:])   # cuts off the "Success - Images Uploaded" bit
+            if isinstance(result, list):
+                return result
+            raise Exception(f"Image upload error - Unable to parse {response.text}")
 
         except Exception as e:
             display.push_error(e, sku)
             return None
 
-    def upload_item(self, item_batch: list, images, listing_number: int, display) -> UploadResult:
-        item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
+    def upload_item(self, item_batch, images, listing_number: int) -> UploadResult:
+        item = item_batch.default
         website_data = self.upload_config.website_item
         to_upload = {}
-        order = zip(self.upload_config.upload_ordering, self.upload_config.detail_ordering)
-        for key, value in order:
+        for key, value in self.upload_config.field_mapping.items():
             to_upload[value] = item[key]
 
-        to_upload["paths"] = ";" * (item.images.count(";") - 1)
+        to_upload["paths"] = ";" * (item_batch.images.count(";") - 1)
         try:
             response = self.client.post(
                 self.upload_config.website_url + website_data["url"],

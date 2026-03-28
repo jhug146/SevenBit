@@ -45,13 +45,8 @@ class UploadDisplay(object):
 
         self.status_vars = []
         self.status_labels = []
-        for i,batch in enumerate(listings):
-            for country in batch:
-                if country:
-                    item = country
-                    break
-
-            for detail in ((74, item.title, 0),(12, item.sku, 1)):
+        for i, batch in enumerate(listings):
+            for detail in ((74, batch.title, 0),(12, batch.sku, 1)):
                 tk.Label(self.content_frame, width=detail[0], height=1, text=detail[1], borderwidth=1, relief="solid").grid(row=i, column=detail[2])
             var = tk.StringVar(self.win, value="")
             var.set("Waiting")

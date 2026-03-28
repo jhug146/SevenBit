@@ -61,7 +61,4 @@ class UploadConfig(BaseConfig):
     def max_dispatch_time(self): return self._data["user_info"]["max_dispatch_time"]
 
     @property
-    def upload_ordering(self): return self._data["upload_ordering"]
-
-    @property
-    def detail_ordering(self): return self._data["detail_ordering"]
+    def field_mapping(self): return self._data["field_mapping"]
