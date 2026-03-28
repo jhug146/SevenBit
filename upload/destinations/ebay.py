@@ -2,11 +2,32 @@ from ebaysdk.trading import Connection as TradingConnection
 import ebaysdk.exception
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 import time
 
 from upload.destinations.image_store import ImageStore
 from upload.destinations.base import Destination
 from upload.models.upload_result import UploadResult, ImageUploadResult, UploadStatus
+
+
+@dataclass(frozen=True)
+class SiteInfo:
+    abbr: str
+    id: str
+    name: str
+    currency: str
+    option_key: str
+    label: str
+
+SITES = (
+    SiteInfo("US",        "0",   "ebay.com",    "USD", "US",  "US" ),
+    SiteInfo("UK",        "3",   "ebay.co.uk",  "GBP", "UK",  "UK" ),
+    SiteInfo("Australia", "15",  "ebay.com.au", "AUD", "AUS", "AUS"),
+    SiteInfo("France",    "71",  "ebay.fr",     "EUR", "FR",  "FRA"),
+    SiteInfo("Germany",   "77",  "ebay.de",     "EUR", "DE",  "GER"),
+    SiteInfo("Italy",     "101", "ebay.it",     "EUR", "IT",  "ITA"),
+    SiteInfo("Spain",     "186", "ebay.es",     "EUR", "ES",  "SPA"),
+)
 
 
 class EbayImageStore:
@@ -58,7 +79,6 @@ class EbayImageStore:
                 time.sleep(0.5)
 
         pic_results = [f.result() for f in as_completed(futures)]
-        print(pic_results)
 
         if any(r.status == UploadStatus.FAILURE for r in pic_results):
             return None
@@ -75,12 +95,12 @@ class EbayImageStore:
             attempts += 1
             try:
                 connection = TradingConnection(config_file=None, siteid="3", devid=self.accounts.devid, certid=self.accounts.certid, token=self.accounts.token, appid=self.accounts.appid, domain="api.ebay.com", debug=False)
-                response = connection.execute("UploadSiteHostedPictures", self.upload_config.picture_data, files=files)
-                if "Ack" not in response.dict():
-                    display.push_error(response.dict(), sku)
+                response = connection.execute("UploadSiteHostedPictures", self.upload_config.picture_data, files=files).dict()
+                if "Ack" not in response:
+                    display.push_error(response, sku)
                     continue
-                elif response.dict()["Ack"] == "Failure":
-                    display.push_error(response.dict()["Errors"], sku)
+                elif response["Ack"] == "Failure":
+                    display.push_error(response["Errors"], sku)
                     continue
                 break
             except Exception as error:
@@ -90,7 +110,7 @@ class EbayImageStore:
             return ImageUploadResult(UploadStatus.FAILURE, pic_id)
 
         try:
-            url = response.dict()["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
+            url = response["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
             return ImageUploadResult(UploadStatus.SUCCESS, pic_id, url)
         except KeyError as key_error:
             display.push_error(key_error, sku)
@@ -105,15 +125,9 @@ class EbaySiteDestination(Destination):
     of how many regional sites are enabled.
     """
 
-    SITE_ABBRS  = ("US", "UK", "Australia", "France", "Germany", "Italy", "Spain")
-    SITE_IDS    = ("0",  "3",  "15",        "71",     "77",      "101",   "186")
-    SITE_NAMES  = ("ebay.com", "ebay.co.uk", "ebay.com.au", "ebay.fr", "ebay.de", "ebay.it", "ebay.es")
-    SITE_CURRS  = ("USD", "GBP", "AUD", "EUR", "EUR", "EUR", "EUR")
-    OPTION_KEYS = ("US",  "UK",  "AUS",  "FR",  "DE",  "IT",  "ES")
-    LABELS      = ("US",  "UK",  "AUS",  "FRA", "GER", "ITA", "SPA")
-
     def __init__(self, site_num: int, accounts, upload_config, image_store: EbayImageStore):
         self.site_num = site_num
+        self.site = SITES[site_num]
         self.accounts = accounts
         self.upload_config = upload_config
         self.image_store = image_store
@@ -121,11 +135,11 @@ class EbaySiteDestination(Destination):
 
     @property
     def name(self) -> str:
-        return self.OPTION_KEYS[self.site_num]
+        return self.site.option_key
 
     @property
     def label(self) -> str:
-        return self.LABELS[self.site_num]
+        return self.site.label
 
     def has_data(self, item_batch) -> bool:
         return self.site_num < len(item_batch) and bool(item_batch[self.site_num])
@@ -136,7 +150,7 @@ class EbaySiteDestination(Destination):
     def update_connection(self):
         self.connection = TradingConnection(
             config_file=None,
-            siteid=self.SITE_IDS[self.site_num],
+            siteid=self.site.id,
             devid=self.accounts.devid,
             certid=self.accounts.certid,
             token=self.accounts.token,
@@ -156,12 +170,14 @@ class EbaySiteDestination(Destination):
         item_specific_list = []
         for detail in details.specifics:
             prefix, suffix = detail[:3], detail[3:]
-            if prefix == "IS_" and self.upload_config.translate_headers:
+            if prefix != "IS_":
+                continue
+            if self.upload_config.translate_headers:
                 item_specific_list.append({
                     "Name": self.upload_config.is_names[suffix][self.site_num],
                     "Value": details.specifics[detail]
                 })
-            elif prefix == "IS_" and not self.upload_config.translate_headers and details.specifics[detail]:
+            elif details.specifics[detail]:
                 item_specific_list.append({
                     "Name": suffix,
                     "Value": details.specifics[detail]
@@ -185,9 +201,9 @@ class EbaySiteDestination(Destination):
                 "ConditionDescription": details.condition_description,
                 "Country": self.upload_config.country,
                 "Location": self.upload_config.country,
-                "Site": self.SITE_ABBRS[self.site_num],
-                "SiteId": self.SITE_IDS[self.site_num],
-                "Currency": self.SITE_CURRS[self.site_num],
+                "Site": self.site.abbr,
+                "SiteId": self.site.id,
+                "Currency": self.site.currency,
                 "ConditionID": details.ebay_condition,
                 "PrimaryCategory": {
                     "CategoryID": str(details.category_id)
@@ -222,7 +238,7 @@ class EbaySiteDestination(Destination):
         if request["Item"]["ConditionID"] == "1000":
             del request["Item"]["ConditionDescription"]
 
-        site_label = f"Listing {listing_number} Upload To {self.SITE_NAMES[self.site_num]}"
+        site_label = f"Listing {listing_number} Upload To {self.site.name}"
         try:
             response = self.connection.execute("AddFixedPriceItem", request).dict()
             ebay_status = response["Ack"] if ("Ack" in response) else None

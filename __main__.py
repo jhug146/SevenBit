@@ -17,7 +17,7 @@ from ui.account_dialog import AccountDialog
 from ui.item_type_dialog import ItemTypeDialog
 from ui.download_dialog import DownloadDialog
 from ui.upload_mode_dialog import UploadModeDialog
-from upload.destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination
+from upload.destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination, SITES
 
 import multiprocessing
 import functools
@@ -30,7 +30,7 @@ except KeyError as e:
     root.withdraw()
     messagebox.showerror("Configuration Error", str(e))
     raise SystemExit
-upload_changer = UploadMode(item_type.upload, EbaySiteDestination.LABELS, EbaySiteDestination.OPTION_KEYS)
+upload_changer = UploadMode(item_type.upload, [s.label for s in SITES], [s.option_key for s in SITES])
 item_list = ItemList()
 ui = UI(item_type.upload, item_list)
 ui.update_title(item_type.accounts)
