@@ -111,7 +111,6 @@ class EbayTranslator:
                                         detail_add = self.translators[i-3].translate_batch([detail])
                                         if not type(detail_add) is str:
                                             detail_add = detail_add[0]
-                                        print("GT used")
                                         break
                                     except AttributeError as error:
                                         print(error)

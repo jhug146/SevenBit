@@ -49,6 +49,9 @@ class UploadConfig(BaseConfig):
     def is_names(self): return self._data["is_names"]
 
     @property
+    def field_mapping(self): return self._data["field_mapping"]
+
+    @property
     def country(self): return self._data["user_info"]["country"]
 
     @property
@@ -59,6 +62,3 @@ class UploadConfig(BaseConfig):
 
     @property
     def max_dispatch_time(self): return self._data["user_info"]["max_dispatch_time"]
-
-    @property
-    def field_mapping(self): return self._data["field_mapping"]

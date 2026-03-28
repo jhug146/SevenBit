@@ -20,7 +20,7 @@ class ItemTypeDialog:
         self.win = tk.Tk()
         self.win.title("Items Configuration")
 
-        tk.Label(self.win, text="Enter product name specified in .csv file: ").grid(row=0, column=0)
+        tk.Label(self.win, text="Enter product name specified in .json file: ").grid(row=0, column=0)
         self.choose_var = tk.StringVar(self.win)
         self.choose_type = tk.Entry(self.win, textvariable=self.choose_var)
         self.choose_type.grid(row=1, column=0)
