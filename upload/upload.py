@@ -72,8 +72,7 @@ class Upload:
     def _enabled_dests(self, item_batch):
         return [
             d for d in self.all_dests
-            if d.name in self.upload_config.upload_to
-            and self.upload_mode.is_destination_enabled(d.name)
+            if self.upload_mode.is_destination_enabled(d.name)
             and d.has_data(item_batch)
         ]
 

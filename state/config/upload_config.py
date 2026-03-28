@@ -10,7 +10,7 @@ class UploadConfig(BaseConfig):
     def name(self): return self._data["name"]
 
     @property
-    def upload_to(self): return self._data["upload_to"]
+    def default_sites(self): return self._data["default_sites"]
 
     @property
     def max_title_length(self): return self._data["upload_requirements"]["max_title_length"]
@@ -62,3 +62,6 @@ class UploadConfig(BaseConfig):
 
     @property
     def max_dispatch_time(self): return self._data["user_info"]["max_dispatch_time"]
+
+    @property
+    def vinted_profile_dir(self): return self._data["vinted_profile_dir"]

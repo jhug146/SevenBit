@@ -15,8 +15,10 @@ class ItemBatch:
 
     @property
     def default(self) -> Item:
-        """The English (UK) item, or the only item if untranslated."""
-        return self._items[1] if len(self._items) > 1 else self._items[0]
+        """The English (UK) item if available, otherwise the first non-None item."""
+        if len(self._items) > 1 and self._items[1] is not None:
+            return self._items[1]
+        return next(item for item in self._items if item is not None)
 
     def __getitem__(self, site_num: int) -> Item:
         return self._items[site_num]

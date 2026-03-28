@@ -67,7 +67,7 @@ class EbayTranslator:
         translated_items = []
         item_count = 0
 
-        website_upload = self.upload_mode.is_destination_enabled("SQL")
+        website_upload = self.upload_mode.any_website_enabled()
         no_long_text_translation = self.translation_config.no_long_text_translation
 
         for item in items:

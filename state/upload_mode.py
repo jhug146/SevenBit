@@ -7,19 +7,19 @@ class UploadMode:
         self.fix_mode()
 
     def fix_mode(self):
-        upload_to = self.upload_config.upload_to
-        self.upload_state = [1 if opt in upload_to else 0 for opt in self.ebay_options]
-        self.fast_images = "IMG" in upload_to
-        self.download_images = "DIMG" in upload_to
-        self._website_state = {dest.name: (dest.name in upload_to) for dest in self._website_dests}
+        default_sites = self.upload_config.default_sites
+        self.upload_state = [1 if opt in default_sites else 0 for opt in self.ebay_options]
+        self.fast_images = "IMG" in default_sites
+        self.download_images = "DIMG" in default_sites
+        self._website_state = {dest.name: (dest.name in default_sites) for dest in self._website_dests}
 
     def register(self, all_dests):
         """Call after destinations are created. Builds per-destination toggle state.
         Accepts the full destination list; separates eBay sites (already in upload_state)
         from website destinations (stored in _website_state dict)."""
-        upload_to = self.upload_config.upload_to
+        default_sites = self.upload_config.default_sites
         self._website_dests = [d for d in all_dests if d.name not in self.ebay_options]
-        self._website_state = {dest.name: (dest.name in upload_to) for dest in self._website_dests}
+        self._website_state = {dest.name: (dest.name in default_sites) for dest in self._website_dests}
 
     def apply_allowed_destinations(self, allowed):
         if allowed is None:
@@ -35,3 +35,6 @@ class UploadMode:
         if name in self.ebay_options:
             return bool(self.upload_state[self.ebay_options.index(name)])
         return self._website_state.get(name, False)
+
+    def any_website_enabled(self) -> bool:
+        return any(self._website_state.values())

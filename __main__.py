@@ -17,7 +17,7 @@ from ui.account_dialog import AccountDialog
 from ui.item_type_dialog import ItemTypeDialog
 from ui.download_dialog import DownloadDialog
 from ui.upload_mode_dialog import UploadModeDialog
-from upload.destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination, SITES
+from upload.destinations import EbayImageStore, EbaySiteDestination, WebsiteDestination, VintedDestination, SITES
 
 import multiprocessing
 import functools
@@ -34,10 +34,11 @@ upload_changer = UploadMode(item_type.upload, [s.label for s in SITES], [s.optio
 item_list = ItemList()
 ui = UI(item_type.upload, item_list)
 ui.update_title(item_type.accounts)
-translator = EbayTranslator(item_type.translation, upload_changer)
+translator = EbayTranslator(item_type.translation, upload_changer, item_type.accounts)
 
 ebay_image_store = EbayImageStore(item_type.accounts, item_type.upload, upload_changer)
 website_dest = WebsiteDestination(item_type.upload)
+vinted_dest = VintedDestination(item_type.upload)
 
 destinations = [
     EbaySiteDestination(0, item_type.accounts, item_type.upload, ebay_image_store),  # US
@@ -48,6 +49,7 @@ destinations = [
     EbaySiteDestination(5, item_type.accounts, item_type.upload, ebay_image_store),  # Italy
     EbaySiteDestination(6, item_type.accounts, item_type.upload, ebay_image_store),  # Spain
     website_dest,
+    vinted_dest,
 ]
 
 # When fast_images is on, eBay listings use website-hosted image URLs.
@@ -91,3 +93,5 @@ ui.init_buttons((
 
 multiprocessing.freeze_support()   # Fixes issues with threading in the .exe file
 ui.window.mainloop()
+
+
