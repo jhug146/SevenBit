@@ -96,12 +96,14 @@ class EbayTranslator:
                                 else:
                                     detail_add = re.sub(key, value, detail_add, flags=re.IGNORECASE)
 
-                        if header in self.translation_config.google_translate_fields:
+                        is_condition = bool(re.match(r"^Condition \d+$", header))
+                        if is_condition or header in self.translation_config.google_translate_fields:
                             if (country_code in no_long_text_translation) or (not gt_code) or (not detail_add.strip()):
                                 country_translation[header] = detail_add
                                 continue
 
-                            for key,value in self.translation_config.condition_translation[header].items():
+                            cond_trans = self.translation_config.condition_translation.get(header, {})
+                            for key, value in cond_trans.items():
                                 if detail_add == key:
                                     detail_add = value[i-3]
                                     break
@@ -133,7 +135,7 @@ class EbayTranslator:
                     if self.accounts.build_condition:
                         country_translation["condition_opener"] = self.translation_config.condition_openers[i]
 
-                    country_translation["Fixed Price eBay"] = self.currency_change(float(country_translation["Fixed Price eBay"]), self.translation_config.currency_codes[i])
+                    country_translation["Price"] = self.currency_change(float(country_translation["Price"]), self.translation_config.currency_codes[i])
                     country_translation["IS_Department"] = country_translation["IS_Department"].replace("DaHerren", "Damen")
                     country_translation["Title"] = self.title_fix(country_translation, i, country_code)
 

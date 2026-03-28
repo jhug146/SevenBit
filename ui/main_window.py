@@ -29,7 +29,6 @@ def deleter_status_message(upload_config):
 
 
 class UI:
-    CONDITION_HEADERS = ("Condition 1", "Condition 2", "Condition 4 (Free Text)")
 
     def __init__(self, upload_config, item_list):
         self.upload_config = upload_config
@@ -236,7 +235,7 @@ class UI:
             :return: None
             """
             for i, condition_box in enumerate(condition_boxes):
-                self.item_list.items[n][self.CONDITION_HEADERS[i]] = condition_box.get("1.0", "end").strip().strip("\n")
+                self.item_list.items[n][f"Condition {i + 1}"] = condition_box.get("1.0", "end").strip().strip("\n")
             for detail in var_dict.keys():
                 self.item_list.items[n][detail] = var_dict[detail].get()
 
@@ -252,7 +251,7 @@ class UI:
 
         headers = (
             ("Title", "Title:", 0, 0, 0, 20, 73),
-            ("Fixed Price eBay", "Price:", 50, 185, 100, 185, 10),
+            ("Price", "Price:", 50, 185, 100, 185, 10),
             ("SKU", "SKU:", 400, 185, 450, 185, 10)
         )
         for (list_pos, label, x1, y1, x2, y2, width) in headers:
@@ -262,9 +261,9 @@ class UI:
 
         condition_boxes = []
         tk.Label(self.til_frame, font=self.small_font, text="Conditions:").place(x=0, y=45)
-        for i in range(3):
+        for i, _ in enumerate(self.item_list.items[n].conditions):
             con_box = tk.Text(self.til_frame, font=self.small_font, width=73, height=2)
-            con_box.insert(1.0, self.item_list.items[n][self.CONDITION_HEADERS[i]])
+            con_box.insert(1.0, self.item_list.items[n][f"Condition {i + 1}"])
             con_box.place(x=0, y=65 + i * 40)
             condition_boxes.append(con_box)
 
@@ -307,7 +306,7 @@ class UI:
             item_frame = tk.Frame(self.content_frame, width=round(self.scrw * 0.9), height=round(self.scrh / 200), borderwidth=1, relief="solid")
             self.frames_list.append(item_frame)
             item_frame.grid(row=c, column=0)
-            for detail in ((0, "Path", self.scrh / 150), (1, "Title", self.scrw / 25), (2, "SKU", self.scrw / 100), (3, "Fixed Price eBay", self.scrw / 100)):
+            for detail in ((0, "Path", self.scrh / 150), (1, "Title", self.scrw / 25), (2, "SKU", self.scrw / 100), (3, "Price", self.scrw / 100)):
                 if detail[1] != "Path":
                     tk.Label(item_frame, relief="solid", borderwidth=1, text=item[detail[1]], height=round(self.scrh / 500), width=round(detail[2])).grid(row=0, column=detail[0])
                 else:

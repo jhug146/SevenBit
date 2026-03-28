@@ -93,7 +93,7 @@ class GetItems(object):
         is_values = self.download_config.is_values
 
         images_column = self.get_column_num("Path")
-        price_column = self.get_column_num("Fixed Price eBay")
+        price_column = self.get_column_num("Price")
         description_column = self.get_column_num("eBay Condition Description")
 
         gender = self.get_column_num("IS_Department")

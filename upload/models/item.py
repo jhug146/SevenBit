@@ -1,10 +1,12 @@
+from __future__ import annotations
+import re
 from dataclasses import dataclass, field
 
 
 _FIELD_MAP = {
     "Title":                      "title",
     "SKU":                        "sku",
-    "Fixed Price eBay":           "price",
+    "Price":                      "price",
     "Path":                       "images",
     "eBay Description":           "html",
     "eBay Condition":             "ebay_condition",
@@ -12,11 +14,7 @@ _FIELD_MAP = {
     "eBay Condition Description": "condition_description_raw",
 }
 
-_CONDITION_KEYS = (
-    "Condition 1",
-    "Condition 2",
-    "Condition 4 (Free Text)",
-)
+_CONDITION_RE = re.compile(r"^Condition (\d+)$")
 
 
 @dataclass
@@ -43,45 +41,44 @@ class Item:
     def from_dict(cls, data: dict) -> "Item":
         kwargs = {}
         specifics = {}
-        conditions = ["", "", ""]
+        numbered_conditions = {}
         for key, value in data.items():
             if key in _FIELD_MAP:
                 kwargs[_FIELD_MAP[key]] = value
-            elif key in _CONDITION_KEYS:
-                conditions[_CONDITION_KEYS.index(key)] = value
+            elif m := _CONDITION_RE.match(key):
+                numbered_conditions[int(m.group(1))] = value
             else:
                 specifics[key] = value
+        conditions = [numbered_conditions[n] for n in sorted(numbered_conditions)]
         return cls(**kwargs, conditions=conditions, specifics=specifics)
 
     def to_dict(self) -> dict:
-        conditions = self.conditions + [""] * (3 - len(self.conditions))
         result = {
-            "Title":                      self.title,
-            "SKU":                        self.sku,
-            "Fixed Price eBay":           self.price,
-            "Path":                       self.images,
-            "eBay Description":           self.html,
-            "eBay Condition":             self.ebay_condition,
-            "Condition 1":                conditions[0],
-            "Condition 2":                conditions[1],
-            "Condition 4 (Free Text)":    conditions[2],
+            "Title":            self.title,
+            "SKU":              self.sku,
+            "Price":            self.price,
+            "Path":             self.images,
+            "eBay Description": self.html,
+            "eBay Condition":   self.ebay_condition,
         }
+        for i, c in enumerate(self.conditions, start=1):
+            result[f"Condition {i}"] = c
         result.update(self.specifics)
         return result
 
     def __getitem__(self, name: str) -> str:
         if name in _FIELD_MAP:
             return getattr(self, _FIELD_MAP[name])
-        if name in _CONDITION_KEYS:
-            i = _CONDITION_KEYS.index(name)
+        if m := _CONDITION_RE.match(name):
+            i = int(m.group(1)) - 1
             return self.conditions[i] if i < len(self.conditions) else ""
         return self.specifics[name]
 
     def __setitem__(self, name: str, value: str):
         if name in _FIELD_MAP:
             setattr(self, _FIELD_MAP[name], value)
-        elif name in _CONDITION_KEYS:
-            i = _CONDITION_KEYS.index(name)
+        elif m := _CONDITION_RE.match(name):
+            i = int(m.group(1)) - 1
             while len(self.conditions) <= i:
                 self.conditions.append("")
             self.conditions[i] = value
@@ -89,7 +86,8 @@ class Item:
             self.specifics[name] = value
 
     def keys(self):
-        return list(_FIELD_MAP.keys()) + list(_CONDITION_KEYS) + list(self.specifics.keys())
+        condition_keys = [f"Condition {i+1}" for i in range(len(self.conditions))]
+        return list(_FIELD_MAP.keys()) + condition_keys + list(self.specifics.keys())
 
     def __len__(self):
-        return len(_FIELD_MAP) + len(_CONDITION_KEYS) + len(self.specifics)
+        return len(_FIELD_MAP) + len(self.conditions) + len(self.specifics)
