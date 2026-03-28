@@ -42,9 +42,10 @@ class EbayTranslator:
     GOOGLE_TRANSLATE_CODES = (None, None, None, "fr", "de", "it", "es")
     DEFAULT_COUNTRY_CODES = ("US", "UK", "AUS", "FR", "DE", "IT", "ES")
 
-    def __init__(self, translation_config, upload_mode):
+    def __init__(self, translation_config, upload_mode, accounts):
         self.upload_mode = upload_mode
         self.translation_config = translation_config
+        self.accounts = accounts
         self.translators = (
             GoogleTranslator(source="auto", target="french"),
             GoogleTranslator(source="auto", target="german"),
@@ -129,7 +130,8 @@ class EbayTranslator:
                     if gt_code == "it" or (gt_code == "de" and item["IS_Department"] == "Men"):
                         country_translation["IS_Size"] = "W" + country_translation["IS_Size"]
 
-                    country_translation["condition_opener"] = self.translation_config.condition_openers[i]
+                    if self.accounts.build_condition:
+                        country_translation["condition_opener"] = self.translation_config.condition_openers[i]
 
                     country_translation["Fixed Price eBay"] = self.currency_change(float(country_translation["Fixed Price eBay"]), self.translation_config.currency_codes[i])
                     country_translation["IS_Department"] = country_translation["IS_Department"].replace("DaHerren", "Damen")

@@ -2,14 +2,15 @@ from dataclasses import dataclass, field
 
 
 _FIELD_MAP = {
-    "Title":            "title",
-    "SKU":              "sku",
-    "Fixed Price eBay": "price",
-    "Path":             "images",
-    "eBay Description": "html",
-    "eBay Condition":   "ebay_condition",
-    "eBay Category1ID": "category_id",
-    "condition_opener": "condition_opener",
+    "Title":                      "title",
+    "SKU":                        "sku",
+    "Fixed Price eBay":           "price",
+    "Path":                       "images",
+    "eBay Description":           "html",
+    "eBay Condition":             "ebay_condition",
+    "eBay Category1ID":           "category_id",
+    "condition_opener":           "condition_opener",
+    "eBay Condition Description": "condition_description_raw",
 }
 
 _CONDITION_KEYS = (
@@ -29,11 +30,14 @@ class Item:
     ebay_condition: str = ""
     category_id: str = ""
     condition_opener: str = ""
+    condition_description_raw: str = ""
     conditions: list = field(default_factory=list)
     specifics: dict = field(default_factory=dict)
 
     @property
     def condition_description(self) -> str:
+        if self.condition_description_raw:
+            return self.condition_description_raw
         parts = [c for c in self.conditions if c and c != " "]
         return self.condition_opener + " ••••• ".join(parts)
 

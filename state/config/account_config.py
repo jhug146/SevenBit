@@ -28,6 +28,9 @@ class AccountConfig(BaseConfig):
     @property
     def store_category(self): return self._current["store_category"]
 
+    @property
+    def build_condition(self): return self._current["build_condition"]
+
     def policies(self, item_type_name): return self._current["policies"][item_type_name]
 
     def set_upload_attr(self, upload):
