@@ -135,7 +135,7 @@ class VintedDestination(Destination):
             _human_delay(1.0, 2.0)
             self._dismiss_cookies(driver)
 
-        self._upload_photos(driver, wait, images)
+        self._upload_photos(driver, wait, images[::-1])
         self._fill_text(driver, wait, "[data-testid='title--input']", item.title.title())
         self._fill_textarea(driver, wait, "[data-testid='description--input']", "pair of jeans")
         self._select_category(driver, wait, item)
