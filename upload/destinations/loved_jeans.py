@@ -103,6 +103,6 @@ class WebsiteDestination(Destination):
                 }
             )
             status = UploadStatus.SUCCESS if "Success" in response.text else UploadStatus.FAILURE
-            return UploadResult(status, sort_key=7, message="Website returned: " + response.text)
+            return UploadResult(status, message="Website returned: " + response.text)
         except Exception as e:
-            return UploadResult(UploadStatus.FAILURE, sort_key=7, message=str(e))
+            return UploadResult(UploadStatus.FAILURE, message=str(e))

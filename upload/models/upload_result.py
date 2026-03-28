@@ -11,7 +11,6 @@ class UploadStatus(Enum):
 @dataclass
 class UploadResult:
     status: UploadStatus
-    sort_key: int     # controls ordering of results: eBay site_num (0-6), other destinations (7+)
     message: str = ""
 
 

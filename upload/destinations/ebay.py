@@ -172,7 +172,7 @@ class EbaySiteDestination(Destination):
         html = details.html.replace("&nbsp;", "")
 
         if not policies["payment"][self.site_num]:
-            return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message="You haven't specified a payment policy number for all the sites you're attempting to upload to on this account")
+            return UploadResult(UploadStatus.FAILURE, message="You haven't specified a payment policy number for all the sites you're attempting to upload to on this account")
 
         payment_id = policies["payment"][self.site_num]
         shipping_id = policies["shipping"][self.site_num]
@@ -230,14 +230,14 @@ class EbaySiteDestination(Destination):
             ebay_status = response["Ack"] if ("Ack" in response) else None
 
             if ebay_status == "Success":
-                return UploadResult(UploadStatus.SUCCESS, sort_key=self.site_num, message=f"{site_label}: Success")
+                return UploadResult(UploadStatus.SUCCESS, message=f"{site_label}: Success")
             elif ebay_status == "Warning":
-                return UploadResult(UploadStatus.WARNING, sort_key=self.site_num, message=f"{site_label}: Ebay Upload  ---  Warning  ----  {response}")
+                return UploadResult(UploadStatus.WARNING, message=f"{site_label}: Ebay Upload  ---  Warning  ----  {response}")
             elif ebay_status == "Failure":
-                return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message=f"{site_label}: Ebay Upload  ---  Failure  ----  {response}")
+                return UploadResult(UploadStatus.FAILURE, message=f"{site_label}: Ebay Upload  ---  Failure  ----  {response}")
             else:
-                return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message=f"{site_label}: No Response / Other Error\nLikely An Issue With Ebay Server Or Your Internet Connection\n")
+                return UploadResult(UploadStatus.FAILURE, message=f"{site_label}: No Response / Other Error\nLikely An Issue With Ebay Server Or Your Internet Connection\n")
         except ebaysdk.exception.ConnectionError as error:
             if "Duplicate" in str(error):
-                return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message="Item is a duplicate")
-            return UploadResult(UploadStatus.FAILURE, sort_key=self.site_num, message=str(error))
+                return UploadResult(UploadStatus.FAILURE, message="Item is a duplicate")
+            return UploadResult(UploadStatus.FAILURE, message=str(error))

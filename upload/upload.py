@@ -47,84 +47,71 @@ class Upload:
         self.items_thread.start()
 
     def upload_items_thread(self, en_listings):
-        print("Translating...")
         listings = self.translator.translate(en_listings)
-
-        print("Uploading...")
         self.display = self.make_display(listings, self)
 
-        self.listing_number = 0
+        for self.listing_number, item_batch in enumerate(listings, 1):
+            item = item_batch[1] if len(item_batch) > 1 else item_batch[0]
 
-        for item_batch in listings:
-            self.listing_number += 1
-            item = item_batch[1] if (len(item_batch) > 1) else item_batch[0]
             if self.stop_upload:
                 self.stop_upload = False
                 self.on_error(f"Upload stopped on this SKU: {item.sku}")
                 break
 
-            upload_countries = self.upload_config.upload_to
-            enabled_dests = [
-                d for d in self.all_dests
-                if d.name in upload_countries
-                and self.upload_mode.is_destination_enabled(d.name)
-                and d.has_data(item_batch)
-            ]
-
-            # Reset image caches so each item gets a fresh upload
+            enabled_dests = self._enabled_dests(item_batch)
             for dest in self.all_dests:
                 dest.clear_image_cache(item.sku)
 
-            # Phase 1: upload images for each enabled destination sequentially.
-            # EbaySiteDestinations all share one EbayImageStore, so only the first
-            # one triggers a real upload — the rest return the cached result instantly.
-            # WebsiteDestination also caches, so it uploads at most once even if
-            # called by both the EbayImageStore (fast_images mode) and directly here.
-            image_results = {}
-            upload_failed = False
-            for dest in enabled_dests:
-                images = dest.upload_images(item.images, item.sku, item.title, self.display)
-                print(images)
-                if images is None and (dest.fail_on_image_error or self.upload_mode.fast_images):
-                    self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
-                    upload_failed = True
-                    break
-                image_results[dest] = images
-
-            if upload_failed:
+            image_results = self._upload_images(item, enabled_dests)
+            if image_results is None:
                 continue
 
-            # Phase 2: upload items in parallel, each destination receiving the
-            # image URLs that its own upload_images call returned.
-            feedback = []
-            with ThreadPoolExecutor() as executor:
-                for dest in enabled_dests:
-                    feedback.append(executor.submit(
-                        dest.upload_item, item_batch, image_results[dest], self.listing_number, self.display
-                    ))
-
-            final_feedback = sorted(
-                [fd.result() for fd in feedback],
-                key=lambda r: r.sort_key
-            )
-            print(final_feedback)
-            print("\n\n")
-
-            worst_error = UploadStatus.SUCCESS
-            for result in final_feedback:
-                if result.status == UploadStatus.FAILURE:
-                    worst_error = UploadStatus.FAILURE
-                    if result.message:
-                        self.display.push_error(result.message, item.sku)
-                elif result.status == UploadStatus.WARNING and worst_error != UploadStatus.FAILURE:
-                    worst_error = UploadStatus.WARNING
-                    if result.message:
-                        self.display.push_error(result.message, item.sku)
-
+            feedback = self._upload_items_parallel(item_batch, enabled_dests, image_results)
+            worst_error = self._process_feedback(feedback, item.sku)
             self.display.set_item_status(self.listing_number - 1, worst_error)
             self.on_tick()
 
-        print("Upload complete")
+    def _enabled_dests(self, item_batch):
+        return [
+            d for d in self.all_dests
+            if d.name in self.upload_config.upload_to
+            and self.upload_mode.is_destination_enabled(d.name)
+            and d.has_data(item_batch)
+        ]
+
+    def _upload_images(self, item, enabled_dests):
+        # EbaySiteDestinations share one EbayImageStore so only the first triggers
+        # a real upload — the rest return the cached result instantly. WebsiteDestination
+        # also caches, so it uploads at most once even in fast_images mode.
+        image_results = {}
+        for dest in enabled_dests:
+            images = dest.upload_images(item.images, item.sku, item.title, self.display)
+            if images is None and (dest.fail_on_image_error or self.upload_mode.fast_images):
+                self.display.set_item_status(self.listing_number - 1, UploadStatus.FAILURE)
+                return None
+            image_results[dest] = images
+        return image_results
+
+    def _upload_items_parallel(self, item_batch, enabled_dests, image_results):
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(dest.upload_item, item_batch, image_results[dest], self.listing_number, self.display)
+                for dest in enabled_dests
+            ]
+        return [f.result() for f in futures]
+
+    def _process_feedback(self, feedback, sku):
+        worst_error = UploadStatus.SUCCESS
+        for result in feedback:
+            if result.status == UploadStatus.FAILURE:
+                worst_error = UploadStatus.FAILURE
+                if result.message:
+                    self.display.push_error(result.message, sku)
+            elif result.status == UploadStatus.WARNING and worst_error != UploadStatus.FAILURE:
+                worst_error = UploadStatus.WARNING
+                if result.message:
+                    self.display.push_error(result.message, sku)
+        return worst_error
 
     def set_upload(self, value):
         self.stop_upload = value
