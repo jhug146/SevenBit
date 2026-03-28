@@ -185,7 +185,7 @@ class VintedDestination(Destination):
         ))
         driver.execute_script("arguments[0].style.display = 'block';", file_input)
         file_input.send_keys("\n".join(str(pathlib.Path(p).resolve()) for p in images))
-        _human_delay(2.0, 4.0)
+        _human_delay(1.0, 2.0)
 
     def _fill_text(self, driver, wait, selector: str, text: str):
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
@@ -221,7 +221,7 @@ class VintedDestination(Destination):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
             _human_delay(0.2, 0.4)
             btn.click()
-            _human_delay(0.5, 1.0)
+            _human_delay(0.8, 1.5)
 
     def _select_via_search(self, driver, wait, trigger_selector: str, search_input_id: str, search_text: str):
         """Open a search-based modal dropdown, type the search term, scroll to and click the result."""
@@ -242,8 +242,9 @@ class VintedDestination(Destination):
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", trigger)
         _human_delay(0.3, 0.6)
         driver.execute_script("arguments[0].click();", trigger)
-        _human_delay(0.5, 1.0)
+        _human_delay(0.8, 1.5)
         self._scroll_and_click(driver, wait, option_text)
+        _human_delay(0.5, 1.0)
 
     def _scroll_and_click(self, driver, wait, text: str, extra: str = ""):
         """Find an element by visible text, scroll it into view, and click it.
