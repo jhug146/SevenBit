@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import html
+import re
 import time
 import random
 import threading
@@ -35,6 +37,12 @@ def _chrome_major_version() -> int | None:
         return None
 
 
+
+
+def _strip_html(text: str) -> str:
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = html.unescape(text)
+    return ' '.join(text.split())
 
 
 def _xpath_str(text: str) -> str:
@@ -137,7 +145,7 @@ class VintedDestination(Destination):
 
         self._upload_photos(driver, wait, images[::-1])
         self._fill_text(driver, wait, "[data-testid='title--input']", item.title.title())
-        self._fill_textarea(driver, wait, "[data-testid='description--input']", "pair of jeans")
+        self._fill_textarea(driver, wait, "[data-testid='description--input']", _strip_html(item.description))
         self._select_category(driver, wait, item)
         self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
                                      item["IS_Brand"])
