@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ebaysdk.trading import Connection as TradingConnection
 import ebaysdk.exception
 
