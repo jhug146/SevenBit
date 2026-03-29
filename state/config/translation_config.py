@@ -49,4 +49,7 @@ class TranslationConfig(BaseConfig):
     def html(self): return self._data["html"]
 
     @property
+    def default_specifics(self): return self._data.get("default_specifics", {})
+
+    @property
     def leave_html(self): return self._data.get("leave_html")

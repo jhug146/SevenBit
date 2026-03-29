@@ -86,7 +86,8 @@ class EbayTranslator:
 
                 if translation_data:
                     country_translation = {}
-                    for header,detail in item.to_dict().items():
+                    item_dict = {**item.to_dict(), **self.translation_config.default_specifics}
+                    for header,detail in item_dict.items():
                         detail_add = detail
                         if header in translation_data.keys():
                             for key,value in translation_data[header].items():
