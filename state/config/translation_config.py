@@ -64,7 +64,13 @@ class TranslationConfig(BaseConfig):
     def equality_specifics(self): return self._data.get("equality_specifics", {})
 
     @property
+    def contains_specifics(self): return self._data.get("contains_specifics", {})
+
+    @property
     def default_specifics(self): return self._data.get("default_specifics", {})
+
+    @property
+    def vinted_description(self): return self._data.get("vinted_description")
 
     @property
     def leave_html(self): return self._data.get("leave_html")

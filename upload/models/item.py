@@ -23,6 +23,7 @@ class Item:
     images: str = ""
     html: str = ""
     ebay_condition: str = ""
+    description: str = ""
     condition_description: str = ""
     conditions: list = field(default_factory=list)
     specifics: dict = field(default_factory=dict)
