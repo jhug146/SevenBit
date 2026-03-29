@@ -37,4 +37,8 @@ class SpecificsBuilder:
                 if "max" not in entry or value < entry["max"]:
                     ranged[field] = entry["value"]
                     break
-        return Item.from_dict({**base_dict, **computed, **conditional, **lookup, **ranged, **self.translation_config.default_specifics})
+        equality = {
+            k: (v["if_equal"] if all(str(base_dict.get(a, '')) == str(base_dict.get(b, '')) for a, b in v["pairs"]) else v["else"])
+            for k, v in self.translation_config.equality_specifics.items()
+        }
+        return Item.from_dict({**base_dict, **computed, **conditional, **lookup, **ranged, **equality, **self.translation_config.default_specifics})
