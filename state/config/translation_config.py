@@ -49,6 +49,15 @@ class TranslationConfig(BaseConfig):
     def html(self): return self._data["html"]
 
     @property
+    def computed_specifics(self): return self._data.get("computed_specifics", {})
+
+    @property
+    def lookup_specifics(self): return self._data.get("lookup_specifics", {})
+
+    @property
+    def conditional_specifics(self): return self._data.get("conditional_specifics", {})
+
+    @property
     def default_specifics(self): return self._data.get("default_specifics", {})
 
     @property
