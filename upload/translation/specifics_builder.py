@@ -29,4 +29,12 @@ class SpecificsBuilder:
                     break
             if isinstance(node, str):
                 lookup[field] = node
-        return Item.from_dict({**base_dict, **computed, **conditional, **lookup, **self.translation_config.default_specifics})
+        ranged = {}
+        for field, spec in self.translation_config.range_specifics.items():
+            value = float(base_dict.get(spec["value_field"], 0))
+            condition = base_dict.get(spec["condition_field"], "")
+            for entry in spec["ranges"].get(condition, []):
+                if "max" not in entry or value < entry["max"]:
+                    ranged[field] = entry["value"]
+                    break
+        return Item.from_dict({**base_dict, **computed, **conditional, **lookup, **ranged, **self.translation_config.default_specifics})

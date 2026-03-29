@@ -58,6 +58,9 @@ class TranslationConfig(BaseConfig):
     def conditional_specifics(self): return self._data.get("conditional_specifics", {})
 
     @property
+    def range_specifics(self): return self._data.get("range_specifics", {})
+
+    @property
     def default_specifics(self): return self._data.get("default_specifics", {})
 
     @property
