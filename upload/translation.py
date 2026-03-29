@@ -132,9 +132,6 @@ class EbayTranslator:
                     if gt_code == "it" or (gt_code == "de" and item["IS_Department"] == "Men"):
                         country_translation["IS_Size"] = "W" + country_translation["IS_Size"]
 
-                    if self.accounts.build_condition:
-                        country_translation["condition_opener"] = self.translation_config.condition_openers[i]
-
                     country_translation["Price"] = self.currency_change(float(country_translation["Price"]), self.translation_config.currency_codes[i])
                     country_translation["IS_Department"] = country_translation["IS_Department"].replace("DaHerren", "Damen")
                     country_translation["Title"] = self.title_fix(country_translation, i, country_code)
@@ -146,6 +143,10 @@ class EbayTranslator:
                 if html != "error":
                     country_translation["eBay Description"] = html
                     result = Item.from_dict(country_translation) if isinstance(country_translation, dict) else country_translation
+                    if self.accounts.build_condition:
+                        opener = self.translation_config.condition_openers[i]
+                        parts = [c for c in result.conditions if c and c != " "]
+                        result.condition_description = opener + " ••••• ".join(parts)
                     item_translation.append(result)
                 else:
                     item_translation.append(None)

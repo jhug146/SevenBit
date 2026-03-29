@@ -10,7 +10,6 @@ _FIELD_MAP = {
     "Path":                       "images",
     "eBay Description":           "html",
     "eBay Condition":             "ebay_condition",
-    "condition_opener":           "condition_opener",
 }
 
 _CONDITION_RE = re.compile(r"^Condition (\d+)$")
@@ -24,14 +23,9 @@ class Item:
     images: str = ""
     html: str = ""
     ebay_condition: str = ""
-    condition_opener: str = ""
+    condition_description: str = ""
     conditions: list = field(default_factory=list)
     specifics: dict = field(default_factory=dict)
-
-    @property
-    def condition_description(self) -> str:
-        parts = [c for c in self.conditions if c and c != " "]
-        return self.condition_opener + " ••••• ".join(parts)
 
     @classmethod
     def from_dict(cls, data: dict) -> "Item":
