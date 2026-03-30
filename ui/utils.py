@@ -1,12 +1,12 @@
 import tkinter as tk
 import tkinter.filedialog
-import win32api
+import tkinter.messagebox
 import csv
 import os
 
 
 def display_error(message, message_type="Error"):
-    win32api.MessageBox(0, message, message_type)
+    tkinter.messagebox.showerror(message_type, message)
 
 
 def get_csv_as_list(file, headers):
