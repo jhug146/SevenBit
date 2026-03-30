@@ -1,8 +1,9 @@
 import tkinter as tk
 from upload.models.upload_result import UploadStatus
+from ui.interface import BaseUploadDisplay
 
 
-class UploadDisplay(object):
+class UploadDisplay(BaseUploadDisplay):
 
     def __init__(self, listings, ui, upload):
         """
@@ -56,9 +57,6 @@ class UploadDisplay(object):
             self.status_labels.append(label)
 
         self.listings_len = len(listings)
-
-    def mainloop(self):
-        self.ui.window.mainloop()
 
     def push_error(self, error, sku):
         """

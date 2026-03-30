@@ -1,13 +1,15 @@
 import tkinter as tk
 import tkinter.font
 import tkinter.filedialog
+import tkinter.messagebox
 import requests
 
 from PIL import Image
 from PIL.ImageTk import PhotoImage
 
-from ui.upload_display import ScrollableFrame
-from ui.utils import display_error
+from ui.interface import BaseUI, AppActions
+from .upload_display import ScrollableFrame
+from .utils import display_error
 
 
 WEBSITE_URL = "https://www.lovedjeans.co.uk"
@@ -28,7 +30,7 @@ def deleter_status_message(upload_config):
         return "Deleter Not Running"
 
 
-class UI:
+class UI(BaseUI):
 
     def __init__(self, upload_config, item_list):
         self.upload_config = upload_config
@@ -79,21 +81,35 @@ class UI:
         self.refresh_button = tk.Button(self.table_frame, image=self.refresh_image, command=self.refresh_table)
         self.refresh_button.place(x=1025, y=0)
 
-    def init_buttons(self, func_list):
+    def register_actions(self, actions: AppActions):
         button_details = (
-            ("#133ea1", "Import", 0, 5, 0),
-            ("#133e72", "Upload", 1, 5, 50),
-            ("#128f89", "Download", 2, 155, 0),
-            ("#117f89", "Accounts", 3, 155, 50),
-            ("#129691", "Item Type", 4, 305, 0),
-            ("#123f69", "Upload Mode", 5, 305, 50),
-            ("#148920", "Get Status", 6, 455, 0)
+            ("#133ea1", "Import",      actions.import_file,       5,   0),
+            ("#133e72", "Upload",      actions.upload,            5,  50),
+            ("#128f89", "Download",    actions.download,        155,   0),
+            ("#117f89", "Accounts",    actions.switch_account,  155,  50),
+            ("#129691", "Item Type",   actions.switch_item_type, 305,  0),
+            ("#123f69", "Upload Mode", actions.change_upload_mode, 305, 50),
+            ("#148920", "Get Status",  actions.get_status,      455,   0),
         )
-        for details in button_details:
-            tk.Button(self.options_frame, font=self.big_font, bg=details[0], fg="white", width=10, text=details[1], relief="ridge", command=func_list[details[2]]).place(x=details[3], y=details[4])
+        for bg, text, cmd, x, y in button_details:
+            tk.Button(self.options_frame, font=self.big_font, bg=bg, fg="white", width=10,
+                      text=text, relief="ridge", command=cmd).place(x=x, y=y)
 
     def set_upload_attr(self, upload):
         self.upload = upload
+
+    def show_error(self, message):
+        tkinter.messagebox.showerror("Error", message)
+
+    def tick(self):
+        self.window.update()
+
+    def run(self):
+        self.window.mainloop()
+
+    def save_item(self, n, changes: dict):
+        for key, value in changes.items():
+            self.item_list.items[n][key] = value
 
     def _clear_widget(self, widget):
         for child in widget.winfo_children():
@@ -313,7 +329,7 @@ class UI:
                     try:
                         self.place_table_image(item_frame, item[detail[1]].split(";")[0]).grid(row=0, column=0)
                     except FileNotFoundError:
-                        display_error(f"Error loading image: {item[detail[1]].split(';')[0]}")
+                        self.show_error(f"Error loading image: {item[detail[1]].split(';')[0]}")
 
             tk.Button(item_frame, font=self.small_font, relief="ridge", text="View", height=1, width=round(self.scrw / 100), command=lambda x=c: self.view_item(x)).grid(row=0, column=4)
 

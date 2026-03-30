@@ -1,7 +1,7 @@
 import tkinter as tk
 import json
 
-from ui.utils import display_error
+from .utils import display_error
 
 
 class AccountDialog:

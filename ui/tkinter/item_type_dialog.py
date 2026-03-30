@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from ui.utils import display_error
+from .utils import display_error
 
 
 class ItemTypeDialog:
