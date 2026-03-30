@@ -2,6 +2,7 @@ import tkinter as tk
 import tkinter.filedialog
 import win32api
 import csv
+import os
 
 
 def display_error(message, message_type="Error"):
@@ -24,7 +25,7 @@ def get_csv_as_list(file, headers):
 
 
 def import_file(ui):
-    filename = tk.filedialog.askopenfilename(initialdir="C://", title="Select file", filetype=(("CSV files", "*.csv"),("All files", "*.*")))
+    filename = tk.filedialog.askopenfilename(initialdir=os.path.expanduser("~"), title="Select file", filetype=(("CSV files", "*.csv"),("All files", "*.*")))
     if not filename:
         return None
     if filename[-4:] != ".csv":
