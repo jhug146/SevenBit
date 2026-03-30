@@ -10,6 +10,7 @@ _FIELD_MAP = {
     "Path":                       "images",
     "eBay Description":           "html",
     "eBay Condition":             "ebay_condition",
+    "eBay Condition Description": "condition_description",
 }
 
 _CONDITION_RE = re.compile(r"^Condition (\d+)$")
