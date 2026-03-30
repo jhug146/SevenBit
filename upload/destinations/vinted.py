@@ -115,9 +115,11 @@ class VintedDestination(Destination):
         item = item_batch.default
         with self._lock:
             try:
-                return self._do_upload(item, images)
+                result = self._do_upload(item, images)
             except Exception as e:
-                return UploadResult(UploadStatus.FAILURE, message=f"Vinted: {e}")
+                result = UploadResult(UploadStatus.FAILURE, message=f"Vinted: {e}")
+            _human_delay(30, 120)
+        return result
 
     def _do_upload(self, item, images: list | None) -> UploadResult:
         self.ensure_browser()
