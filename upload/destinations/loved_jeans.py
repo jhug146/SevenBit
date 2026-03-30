@@ -66,7 +66,7 @@ class WebsiteDestination(Destination):
                         images[f"file{i}"] = f.read()
                 response = self.client.post(url, data=data, files=images)
 
-            result = json.loads(response.text[len("Success - Images Uploaded"):])
+            result = json.loads(response.text[len("Success - Images uploaded: "):])
 
             if isinstance(result, list):
                 return result
