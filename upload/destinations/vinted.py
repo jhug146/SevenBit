@@ -7,6 +7,9 @@ import random
 import threading
 import pathlib
 
+import tempfile
+
+from PIL import Image
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -61,6 +64,29 @@ def _xpath_str(text: str) -> str:
 
 def _human_delay(low=0.4, high=1.4):
     time.sleep(random.uniform(low, high))
+
+
+def _perturb_image(path: str) -> str:
+    """Return a temp copy of the image with imperceptible pixel noise to change its hash."""
+    img = Image.open(path).convert("RGB")
+    pixels = img.load()
+    w, h = img.size
+    for _ in range(max(1, int(w * h * 0.001))):
+        x, y = random.randint(0, w - 1), random.randint(0, h - 1)
+        r, g, b = pixels[x, y]
+        channel = random.randint(0, 2)
+        delta = random.choice([-1, 1])
+        if channel == 0:
+            r = max(0, min(255, r + delta))
+        elif channel == 1:
+            g = max(0, min(255, g + delta))
+        else:
+            b = max(0, min(255, b + delta))
+        pixels[x, y] = (r, g, b)
+    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+        tmp_path = tmp.name
+    img.save(tmp_path, "JPEG", quality=95)
+    return tmp_path
 
 
 class VintedDestination(Destination):
@@ -145,32 +171,39 @@ class VintedDestination(Destination):
             _human_delay(1.0, 2.0)
             self._dismiss_cookies(driver)
 
-        self._upload_photos(driver, wait, images[::-1])
-        self._fill_text(driver, wait, "[data-testid='title--input']", f"{item.title.title()} ({item.sku})")
-        self._fill_textarea(driver, wait, "[data-testid='description--input']", _strip_html(item.description))
-        self._select_category(driver, wait, item)
-        self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
-                                     item["IS_Brand"])
-        self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
-                                     _CONDITION_MAP.get(item.ebay_condition, "Good"))
-        self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
-                                     "W" + item["IS_Size"])
-        self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']",
-                                     item["IS_Colour"])
-        self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
-                                     "Denim")
-        self._fill_text(driver, wait, "[data-testid='price-input--input']", str(item.price))
+        temp_files = self._upload_photos(driver, wait, images[::-1])
+        try:
+            self._fill_text(driver, wait, "[data-testid='title--input']", f"{item.title.title()} ({item.sku})")
+            self._fill_textarea(driver, wait, "[data-testid='description--input']", _strip_html(item.description))
+            self._select_category(driver, wait, item)
+            self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
+                                         item["IS_Brand"])
+            self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
+                                         _CONDITION_MAP.get(item.ebay_condition, "Good"))
+            self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
+                                         "W" + item["IS_Size"])
+            self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']",
+                                         item["IS_Colour"])
+            self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
+                                         "Denim")
+            self._fill_text(driver, wait, "[data-testid='price-input--input']", str(item.price))
 
-        _human_delay(0.8, 1.5)
-        wait.until(EC.element_to_be_clickable(
-            (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
-        )).click()
-        _human_delay(2.0, 4.0)
+            _human_delay(0.8, 1.5)
+            wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
+            )).click()
+            _human_delay(2.0, 4.0)
 
-        if "items/new" not in self._driver.current_url:
-            return UploadResult(UploadStatus.SUCCESS, message=f"Vinted: {item.sku} uploaded")
-        return UploadResult(UploadStatus.FAILURE,
-                            message="Vinted: page did not navigate after submit — check browser")
+            if "items/new" not in self._driver.current_url:
+                return UploadResult(UploadStatus.SUCCESS, message=f"Vinted: {item.sku} uploaded")
+            return UploadResult(UploadStatus.FAILURE,
+                                message="Vinted: page did not navigate after submit — check browser")
+        finally:
+            for f in temp_files:
+                try:
+                    pathlib.Path(f).unlink()
+                except Exception:
+                    pass
 
     def _dismiss_cookies(self, driver):
         """Dismiss the cookie consent banner if present. Silently ignored if absent."""
@@ -189,15 +222,18 @@ class VintedDestination(Destination):
         except Exception:
             pass
 
-    def _upload_photos(self, driver, wait, images: list | None):
+    def _upload_photos(self, driver, wait, images: list | None) -> list:
+        """Upload perturbed copies of the images. Returns temp file paths for cleanup."""
         if not images:
-            return
+            return []
+        temp_paths = [_perturb_image(p) for p in images]
         file_input = wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, "[data-testid='add-photos-input']")
         ))
         driver.execute_script("arguments[0].style.display = 'block';", file_input)
-        file_input.send_keys("\n".join(str(pathlib.Path(p).resolve()) for p in images))
+        file_input.send_keys("\n".join(str(pathlib.Path(p).resolve()) for p in temp_paths))
         _human_delay(1.0, 2.0)
+        return temp_paths
 
     def _fill_text(self, driver, wait, selector: str, text: str):
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
