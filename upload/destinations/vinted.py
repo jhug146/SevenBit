@@ -498,13 +498,18 @@ class VintedDestination(Destination):
 
     def _scroll_and_click(self, driver, wait, text: str, extra: str = ""):
         """Find an element by visible text, scroll it into view, and click it.
-        extra: optional XPath prefix to scope the search (e.g. '//li[@role=\"tab\"]')."""
+        extra: optional XPath prefix to scope the search (e.g. '//li[@role=\"tab\"]').
+        Matching is case-insensitive and whitespace-normalised."""
         prefix = extra or "//*"
-        s = _xpath_str(text)
+        s = _xpath_str(text.strip().lower())
+        _U = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        _l = "abcdefghijklmnopqrstuvwxyz"
+        def _lc(expr):
+            return f"translate(normalize-space({expr}),'{_U}','{_l}')"
         element = wait.until(EC.presence_of_element_located((By.XPATH,
-            f"{prefix}[normalize-space()={s}] | "
-            f"{prefix}[.//span[normalize-space()={s}]] | "
-            f"{prefix}[.//button[normalize-space()={s}]]"
+            f"{prefix}[{_lc('.')}={s}] | "
+            f"{prefix}[.//span[{_lc('.')}={s}]] | "
+            f"{prefix}[.//button[{_lc('.')}={s}]]"
         )))
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
         _human_delay(0.2, 0.4)
