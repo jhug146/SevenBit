@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Navigation row -->
+<div class="nav-row">
+  <a href="/" class="btn btn-secondary">← Items</a>
+  {% if prev_n is not None %}
+    <a href="/item/{{ prev_n }}/" class="btn btn-secondary">‹ Prev</a>
+  {% else %}
+    <button class="btn btn-secondary" disabled>‹ Prev</button>
+  {% endif %}
+  <span class="item-counter">{{ n|add:1 }} / {{ count }}</span>
+  {% if next_n is not None %}
+    <a href="/item/{{ next_n }}/" class="btn btn-secondary">Next ›</a>
+  {% else %}
+    <button class="btn btn-secondary" disabled>Next ›</button>
+  {% endif %}
+</div>
+
+<!-- Edit form -->
+<form method="post" action="/item/{{ n }}/save/" id="item-form">
+
+  <div class="detail-grid">
+
+    <!-- Left column: core fields + conditions + images -->
+    <div>
+
+      <!-- Core fields -->
+      <div class="detail-section" style="margin-bottom:1rem">
+        <h3>Details</h3>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" name="title" value="{{ item.title }}">
+        </div>
+        <div style="display:flex;gap:1rem">
+          <div class="form-group" style="flex:1">
+            <label>Price</label>
+            <input type="text" name="price" value="{{ item.price }}">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>SKU</label>
+            <input type="text" name="sku" value="{{ item.sku }}">
+          </div>
+        </div>
+      </div>
+
+      <!-- Conditions -->
+      {% if item.conditions %}
+      <div class="detail-section" style="margin-bottom:1rem">
+        <h3>Conditions</h3>
+        {% for condition in item.conditions %}
+        <div class="form-group">
+          <label>Condition {{ forloop.counter }}</label>
+          <textarea name="condition_{{ forloop.counter }}" rows="2">{{ condition }}</textarea>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Images -->
+      <div class="detail-section">
+        <h3>Images <span style="font-weight:400;font-size:11px;color:var(--text-muted)">(click to move pair to front · × to delete)</span></h3>
+        <div class="image-grid" id="image-grid"></div>
+        <input type="hidden" name="images" id="images-input">
+      </div>
+
+    </div>
+
+    <!-- Right column: specifics -->
+    {% if displayed_specifics %}
+    <div class="detail-section">
+      <h3>Specifics</h3>
+      <table class="specifics-table">
+        {% for key, value, label in displayed_specifics %}
+        <tr>
+          <td>{{ label }}</td>
+          <td><input type="text" name="specific_{{ key }}" value="{{ value }}"></td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Action buttons -->
+  <div class="action-row">
+    <button type="submit" class="btn btn-teal">Save Changes</button>
+    <button type="button" class="btn btn-primary" onclick="uploadItem()">Upload Item</button>
+  </div>
+
+</form>
+
+<!-- Hidden upload form -->
+<form method="post" action="/item/{{ n }}/upload/" id="upload-item-form">
+</form>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  const imagePaths = {{ image_paths_json }};
+
+  function renderImages() {
+    const grid = document.getElementById('image-grid');
+    grid.innerHTML = '';
+    imagePaths.forEach(function(path, i) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'img-wrapper';
+
+      const img = document.createElement('img');
+      img.src = pathToUrl(path);
+      img.alt = '';
+      img.addEventListener('click', function() { reorder(i); });
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'img-delete';
+      btn.textContent = '×';
+      btn.addEventListener('click', function(e) { e.stopPropagation(); deleteImage(i); });
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(btn);
+      grid.appendChild(wrapper);
+    });
+    document.getElementById('images-input').value = imagePaths.join(';') + (imagePaths.length ? ';' : '');
+  }
+
+  function pathToUrl(path) {
+    if (!path) return '';
+    if (path.indexOf('http') !== -1) return path;
+    // Normalise Windows backslashes
+    path = path.replace(/\\/g, '/');
+    // Strip drive letter (C:/)
+    path = path.replace(/^[A-Za-z]:\//, '');
+    path = path.replace(/^\//, '');
+    return '/img/' + path;
+  }
+
+  function reorder(i) {
+    if (i < imagePaths.length - 1) {
+      const pair = imagePaths.splice(i, 2);
+      imagePaths.unshift(pair[1], pair[0]);
+      renderImages();
+    }
+  }
+
+  function deleteImage(i) {
+    if (imagePaths.length > 4) {
+      imagePaths.splice(i, 1);
+      renderImages();
+    }
+  }
+
+  function uploadItem() {
+    document.getElementById('upload-item-form').submit();
+  }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', function(e) {
+    {% if next_n is not None %}
+    if (e.key === 'ArrowDown') window.location.href = '/item/{{ next_n }}/';
+    {% endif %}
+    {% if prev_n is not None %}
+    if (e.key === 'ArrowUp') window.location.href = '/item/{{ prev_n }}/';
+    {% endif %}
+  });
+
+  renderImages();
+</script>
+{% endblock %}

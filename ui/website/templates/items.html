@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <!-- Import CSV -->
+  <form method="post" action="/import/" enctype="multipart/form-data" class="import-form" id="import-form">
+    <input type="file" name="csv_file" accept=".csv" id="csv-input">
+    <label for="csv-input" class="btn btn-primary">Import CSV</label>
+  </form>
+
+  <button class="btn btn-primary" onclick="document.getElementById('upload-dialog').showModal()">Upload</button>
+  <button class="btn btn-teal2" onclick="document.getElementById('accounts-dialog').showModal()">Accounts</button>
+  <button class="btn btn-cyan" onclick="document.getElementById('item-type-dialog').showModal()">Item Type</button>
+  <button class="btn btn-navy" onclick="document.getElementById('upload-mode-dialog').showModal()">Upload Mode</button>
+  <button class="btn btn-teal" onclick="document.getElementById('download-dialog').showModal()">Download</button>
+  <button class="btn btn-green" onclick="getStatus()">Get Status</button>
+</div>
+
+<!-- Items table -->
+{% if item_rows %}
+<table>
+  <thead>
+    <tr>
+      <th style="width:52px">Image</th>
+      <th>Title</th>
+      <th style="width:140px">SKU</th>
+      <th style="width:80px">Price</th>
+      <th style="width:70px"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in item_rows %}
+    <tr class="{{ row.outlined_class }}">
+      <td>
+        {% if row.image_url %}
+          <img src="{{ row.image_url }}" alt="">
+        {% endif %}
+      </td>
+      <td>{{ row.title }}</td>
+      <td class="mono">{{ row.sku }}</td>
+      <td>{{ row.price }}</td>
+      <td><a href="/item/{{ row.n }}/" class="btn btn-sm btn-blue">View</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+  <p>No items loaded. Import a CSV file to get started.</p>
+</div>
+{% endif %}
+
+
+<!-- ── Upload Options Modal ─────────────────────────────────── -->
+<dialog id="upload-dialog">
+  <div class="dialog-title">Upload Options</div>
+  <form method="post" action="/upload/start/" id="upload-form">
+    <div class="upload-mode-options">
+      <label class="upload-mode-option">
+        <input type="radio" name="mode" value="normal" checked onchange="toggleUploadFields()"> Normal Upload
+      </label>
+      <label class="upload-mode-option">
+        <input type="radio" name="mode" value="specific" onchange="toggleUploadFields()"> Specific Items
+      </label>
+      <div class="upload-extra" id="specific-extra">
+        <input type="text" name="skus" placeholder="SKUs separated by commas">
+      </div>
+      <label class="upload-mode-option">
+        <input type="radio" name="mode" value="range" onchange="toggleUploadFields()"> Starting Point
+      </label>
+      <div class="upload-extra" id="range-extra" style="display:flex;gap:0.5rem;">
+        <input type="text" name="start_sku" placeholder="Start SKU" style="flex:1">
+        <input type="text" name="end_sku" placeholder="End SKU" style="flex:1">
+      </div>
+    </div>
+    <div class="dialog-footer">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('upload-dialog').close()">Cancel</button>
+      <button type="submit" class="btn btn-primary">Start Upload</button>
+    </div>
+  </form>
+</dialog>
+
+
+<!-- ── Accounts Modal ───────────────────────────────────────── -->
+<dialog id="accounts-dialog">
+  <div class="dialog-title">Switch Account</div>
+  <div class="form-group">
+    <label>Account name</label>
+    <input type="text" id="account-input" placeholder="Enter account name">
+  </div>
+  <div id="accounts-error" class="dialog-error" style="display:none"></div>
+  <div class="dialog-footer">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('accounts-dialog').close()">Cancel</button>
+    <button type="button" class="btn btn-primary" onclick="submitAccount()">Switch</button>
+  </div>
+</dialog>
+
+
+<!-- ── Item Type Modal ──────────────────────────────────────── -->
+<dialog id="item-type-dialog">
+  <div class="dialog-title">Switch Item Type</div>
+  <div class="form-group">
+    <label>Product name (from .json file)</label>
+    <input type="text" id="item-type-input" placeholder="Enter product name">
+  </div>
+  <div id="item-type-error" class="dialog-error" style="display:none"></div>
+  <div class="dialog-footer">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('item-type-dialog').close()">Cancel</button>
+    <button type="button" class="btn btn-primary" onclick="submitItemType()">Switch</button>
+  </div>
+</dialog>
+
+
+<!-- ── Upload Mode Modal ────────────────────────────────────── -->
+<dialog id="upload-mode-dialog">
+  <div class="dialog-title">Upload Mode</div>
+  {% if upload_mode %}
+  <div class="checkbox-group">
+    {% for site in upload_mode.ebay_sites %}
+    <label class="checkbox-item">
+      <input type="checkbox" name="ebay_{{ site.opt }}" id="ebay_{{ site.opt }}" {% if site.checked %}checked{% endif %}>
+      {{ site.label }}
+    </label>
+    {% endfor %}
+    {% for dest in upload_mode.website_dests %}
+    <label class="checkbox-item">
+      <input type="checkbox" name="dest_{{ dest.name }}" id="dest_{{ dest.name }}" {% if dest.checked %}checked{% endif %}>
+      {{ dest.label }}
+    </label>
+    {% endfor %}
+    <label class="checkbox-item">
+      <input type="checkbox" id="fast_images" {% if upload_mode.fast_images %}checked{% endif %}> Fast Images
+    </label>
+    <label class="checkbox-item">
+      <input type="checkbox" id="download_images" {% if upload_mode.download_images %}checked{% endif %}> Download Images with Items
+    </label>
+  </div>
+  {% else %}
+  <p style="color:var(--text-muted);font-size:13px;">Upload mode not available.</p>
+  {% endif %}
+  <div id="upload-mode-error" class="dialog-error" style="display:none"></div>
+  <div class="dialog-footer">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('upload-mode-dialog').close()">Cancel</button>
+    <button type="button" class="btn btn-primary" onclick="submitUploadMode()">Save</button>
+  </div>
+</dialog>
+
+
+<!-- ── Download Modal ───────────────────────────────────────── -->
+<dialog id="download-dialog">
+  <div class="dialog-title">Download Items</div>
+  <div class="form-group">
+    <label>Item numbers (comma-separated)</label>
+    <input type="text" id="download-input" placeholder="e.g. 1001, 1002, 1003">
+  </div>
+  <div id="download-error" class="dialog-error" style="display:none"></div>
+  <div class="dialog-footer">
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('download-dialog').close()">Cancel</button>
+    <button type="button" class="btn btn-primary" onclick="submitDownload()">Download</button>
+  </div>
+</dialog>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+  // CSV import: submit immediately on file selection
+  document.getElementById('csv-input').addEventListener('change', function () {
+    if (this.files.length) document.getElementById('import-form').submit();
+  });
+
+  // Upload options: show/hide extra fields
+  function toggleUploadFields() {
+    const mode = document.querySelector('input[name="mode"]:checked').value;
+    document.getElementById('specific-extra').style.display = mode === 'specific' ? '' : 'none';
+    document.getElementById('range-extra').style.display = mode === 'range' ? '' : 'none';
+  }
+  toggleUploadFields();
+
+  // Shared AJAX POST helper
+  function postJSON(url, data) {
+    const body = new URLSearchParams(data).toString();
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    }).then(r => r.json());
+  }
+
+  function showDialogError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.style.display = '';
+  }
+  function clearDialogError(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+
+  // Accounts
+  function submitAccount() {
+    clearDialogError('accounts-error');
+    const name = document.getElementById('account-input').value.trim();
+    postJSON('/switch-account/', { name }).then(data => {
+      if (data.success) {
+        document.getElementById('nav-title').textContent = data.title;
+        document.getElementById('accounts-dialog').close();
+        document.getElementById('account-input').value = '';
+      } else {
+        showDialogError('accounts-error', data.error || 'Error switching account');
+      }
+    });
+  }
+  document.getElementById('account-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitAccount();
+  });
+
+  // Item Type
+  function submitItemType() {
+    clearDialogError('item-type-error');
+    const name = document.getElementById('item-type-input').value.trim();
+    postJSON('/switch-item-type/', { name }).then(data => {
+      if (data.success) {
+        document.getElementById('nav-title').textContent = data.title;
+        document.getElementById('item-type-dialog').close();
+        document.getElementById('item-type-input').value = '';
+      } else {
+        showDialogError('item-type-error', data.error || 'Item type not found');
+      }
+    });
+  }
+  document.getElementById('item-type-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitItemType();
+  });
+
+  // Upload Mode
+  function submitUploadMode() {
+    clearDialogError('upload-mode-error');
+    const data = {};
+    document.querySelectorAll('#upload-mode-dialog input[type=checkbox]').forEach(cb => {
+      if (cb.checked) data[cb.id] = '1';
+    });
+    postJSON('/upload-mode/', data).then(d => {
+      if (d.success) {
+        document.getElementById('upload-mode-dialog').close();
+      } else {
+        showDialogError('upload-mode-error', 'Failed to save');
+      }
+    });
+  }
+
+  // Download
+  function submitDownload() {
+    clearDialogError('download-error');
+    const item_numbers = document.getElementById('download-input').value.trim();
+    postJSON('/download/', { item_numbers }).then(data => {
+      if (data.success) {
+        document.getElementById('download-dialog').close();
+        document.getElementById('download-input').value = '';
+      } else {
+        showDialogError('download-error', data.error || 'Error downloading items');
+      }
+    });
+  }
+  document.getElementById('download-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitDownload();
+  });
+
+  // Get Status
+  function getStatus() {
+    fetch('/status/').then(r => r.json()).then(data => {
+      document.getElementById('nav-title').textContent = data.title;
+    });
+  }
+</script>
+{% endblock %}

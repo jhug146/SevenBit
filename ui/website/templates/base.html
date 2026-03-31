@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block page_title %}{{ title|default:"SevenBit" }}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+  <nav class="navbar">
+    <span class="navbar-title" id="nav-title">{{ title|default:"SevenBit" }}</span>
+    {% block navbar_extra %}{% endblock %}
+  </nav>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

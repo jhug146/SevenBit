@@ -4,7 +4,14 @@ Able to upload to lovedjeans website
 JSON file containing upload and translation data
 """
 import multiprocessing
-from app import App
+
+USE_WEB_UI = False
 
 multiprocessing.freeze_support()   # Fixes issues with threading in the .exe file
-App().run()
+
+if USE_WEB_UI:
+    from ui.website.web_app import WebApp
+    WebApp().run()
+else:
+    from app import App
+    App().run()
