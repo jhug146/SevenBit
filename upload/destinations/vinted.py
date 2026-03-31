@@ -215,6 +215,19 @@ def _human_delay(low=0.4, high=1.4):
     time.sleep(random.uniform(low, high))
 
 
+def _wander_mouse(driver):
+    """Move the mouse to a few random nearby positions to simulate idle movement."""
+    try:
+        body = driver.find_element(By.TAG_NAME, "body")
+        for _ in range(random.randint(2, 5)):
+            x = random.randint(-150, 150)
+            y = random.randint(-80, 80)
+            ActionChains(driver).move_to_element_with_offset(body, x, y).perform()
+            time.sleep(random.uniform(0.1, 0.35))
+    except Exception:
+        pass
+
+
 def _perturb_image(path: str) -> str:
     """Return a temp copy of the image with imperceptible pixel noise to change its hash."""
     img = Image.open(path).convert("RGB")
@@ -250,12 +263,19 @@ class VintedDestination(Destination):
     """
 
     _SELL_URL = "https://www.vinted.co.uk/items/new"
+    _BROWSE_URLS = [
+        "https://www.vinted.co.uk/",
+        "https://www.vinted.co.uk/catalog?search_text=jeans",
+        "https://www.vinted.co.uk/member/inbox",
+    ]
 
     def __init__(self, upload_config):
         self._profile_dir = upload_config.vinted_profile_dir
         self._driver = None
         self._display = None
         self._lock = threading.Lock()
+        self._upload_count = 0
+        self._next_long_pause_at = random.randint(3, 6)
 
     @property
     def name(self) -> str:
@@ -293,13 +313,24 @@ class VintedDestination(Destination):
                 result = self._do_upload(item, images)
             except Exception as e:
                 result = UploadResult(UploadStatus.FAILURE, message=f"Vinted: {e}")
-            _human_delay(30, 120)
+            self._upload_count += 1
+            if self._upload_count >= self._next_long_pause_at:
+                _human_delay(300, 600)  # 5–10 min break every few items
+                self._upload_count = 0
+                self._next_long_pause_at = random.randint(3, 6)
+            else:
+                _human_delay(45, 150)
         return result
 
     def _do_upload(self, item, images: list | None) -> UploadResult:
         self.ensure_browser()
         driver = self._driver
         wait = WebDriverWait(driver, 20)
+
+        if random.random() < 0.4:
+            driver.get(random.choice(self._BROWSE_URLS))
+            _human_delay(4.0, 10.0)
+            self._dismiss_cookies(driver)
 
         driver.get(self._SELL_URL)
         _human_delay(1.5, 3.0)
@@ -323,24 +354,32 @@ class VintedDestination(Destination):
         temp_files = self._upload_photos(driver, wait, images[::-1])
         try:
             self._fill_text(driver, wait, "[data-testid='title--input']", _build_vinted_title(item, encode_sku(item.sku)))
+            _wander_mouse(driver)
             self._fill_textarea(driver, wait, "[data-testid='description--input']", _build_vinted_description(item))
+            _wander_mouse(driver)
             self._select_category(driver, wait, item)
             self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
                                          item["IS_Brand"])
+            _wander_mouse(driver)
             self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
                                          _CONDITION_MAP.get(item.ebay_condition, "Good"))
             self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
                                          "W" + item["IS_Size"])
+            _wander_mouse(driver)
             self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']",
                                          item["IS_Colour"])
             self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
                                          "Denim")
             self._fill_text(driver, wait, "[data-testid='price-input--input']", str(item.price))
 
+            _wander_mouse(driver)
             _human_delay(0.8, 1.5)
-            wait.until(EC.element_to_be_clickable(
+            save_btn = wait.until(EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
-            )).click()
+            ))
+            ActionChains(driver).move_to_element(save_btn).perform()
+            _human_delay(0.3, 0.8)
+            ActionChains(driver).click(save_btn).perform()
             _human_delay(2.0, 4.0)
 
             if "items/new" not in self._driver.current_url:
@@ -404,9 +443,12 @@ class VintedDestination(Destination):
         category_label = _FIT_TO_CATEGORY.get(fit, "Straight fit jeans")
         department = "Men" if item["IS_Department"] == "Men" else "Women"
 
-        wait.until(EC.element_to_be_clickable(
+        trigger = wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "[data-testid='catalog-select-dropdown-input']")
-        )).click()
+        ))
+        ActionChains(driver).move_to_element(trigger).perform()
+        _human_delay(0.3, 0.6)
+        ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
 
         for label in (department, "Clothing", "Jeans", category_label):
@@ -415,9 +457,9 @@ class VintedDestination(Destination):
                 f"//div[@data-testid='catalog-select-dropdown-content']"
                 f"//div[@role='button'][.//*[normalize-space()={s}]]"
             )))
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+            ActionChains(driver).move_to_element(btn).perform()
             _human_delay(0.2, 0.4)
-            btn.click()
+            ActionChains(driver).click(btn).perform()
             _human_delay(0.8, 1.5)
 
     def _select_via_search(self, driver, wait, trigger_selector: str, search_input_id: str, search_text: str):
