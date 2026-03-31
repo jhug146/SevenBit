@@ -60,6 +60,142 @@ def _build_vinted_title(item, sku_tag: str) -> str:
     return f"{item['IS_Model']} {item['IS_Fit']} Jeans {size} {item['IS_Colour']} #{sku_tag}"
 
 
+_CONDITION_REWRITES = [
+    # ── Main condition phrases ────────────────────────────────────────────────
+    (re.compile(r"in very\s+good condition with no wear at the hems,?\s*please note that they have been taken up from their original length", re.I),
+     "Very good condition — hems have been taken up from original length"),
+    (re.compile(r"in good condition with no wear at the hems,?\s*please note that they have been taken up from their original length", re.I),
+     "Good condition — hems have been taken up from original length"),
+    (re.compile(r"in good condition apart from some wear on the seam between the legs", re.I),
+     "Good condition with some inner seam wear"),
+    (re.compile(r"in good very condition with a bit of wear at the hems", re.I),
+     "Good condition with some hem wear"),
+    (re.compile(r"in good condition with a bit of wear around the edges \(pictured\)", re.I),
+     "Good condition — light edge wear visible in photos"),
+    (re.compile(r"in good condition with no wear to the hems", re.I),
+     "Good condition, hems intact"),
+    (re.compile(r"in good condition with no wear at the hems", re.I),
+     "Good condition, hems intact"),
+    (re.compile(r"in reasonable condition with a bit of wear around the edges \(pictured\)", re.I),
+     "Fair condition with some edge wear visible in photos"),
+    (re.compile(r"in very\s+good condition", re.I),
+     "Very good condition"),
+    (re.compile(r"in good condition", re.I),
+     "Good condition"),
+    (re.compile(r"brand new with tags", re.I),
+     "Brand new, tags still attached"),
+    # ── Sizing notes ─────────────────────────────────────────────────────────
+    (re.compile(r"these jeans do measure longer in the leg than the label suggests[^.]*\.?", re.I),
+     "Leg measures longer than the label size"),
+    (re.compile(r"these jeans do measure shorter in the leg than the label suggests[^.]*\.?", re.I),
+     "Leg measures shorter than the label size"),
+    (re.compile(r"these jeans do measure slightly bigger at the waist than the label suggests[^.]*\.?", re.I),
+     "Waist measures slightly larger than the label size"),
+    (re.compile(r"please note that they are\s+a bit bigger at the waist and longer in the leg[^.]*\.?", re.I),
+     "Waist and leg both measure larger than the label"),
+    (re.compile(r"please note that they are\s+a bit smaller at the waist and shorter in the leg[^.]*\.?", re.I),
+     "Waist and leg both measure smaller than the label"),
+    # ── Standalone notes ─────────────────────────────────────────────────────
+    (re.compile(r"please note that they have been taken up from their original length\.?", re.I),
+     "Hems have been taken up from original length"),
+    (re.compile(r"please note that ther[ea]\s+r?e?\s+a few faint bleach marks on the l[eg]+s?\.?", re.I),
+     "A few faint bleach marks on the legs"),
+    (re.compile(r"quite a lightweight denim", re.I),
+     "Lightweight denim"),
+    (re.compile(r"very very dark blue almost black", re.I),
+     "Very dark blue, almost black"),
+    (re.compile(r"american sizing", re.I),
+     "American sizing"),
+    (re.compile(r"small for size,?\s*possibly a (W?\d+)", re.I),
+     r"Comes up small — likely a \1"),
+    (re.compile(r"big for size,?\s*possibly a (W?\d+)", re.I),
+     r"Comes up large — likely a \1"),
+    # ── Cleanup ──────────────────────────────────────────────────────────────
+    (re.compile(r"\s*[--]\s*please see actual measurements?\.?", re.I), ""),
+    (re.compile(r"\s*please see actual measurements?\.?", re.I), ""),
+]
+
+
+def _rewrite_condition(text: str) -> str:
+    text = text.strip()
+    for pattern, replacement in _CONDITION_REWRITES:
+        text = pattern.sub(replacement, text)
+    return text.strip()
+
+
+def _get(item, key: str) -> str:
+    try:
+        return item[key] or ""
+    except (KeyError, IndexError):
+        return ""
+
+
+def _to_cm(inches: str) -> str:
+    try:
+        return str(round(float(inches) * 2.54))
+    except (ValueError, TypeError):
+        return ""
+
+
+def _build_vinted_description(item) -> str:
+    model   = _get(item, "IS_Model")
+    fit     = _get(item, "IS_Fit").lower()
+    colour  = _get(item, "IS_Colour").lower()
+    material = _get(item, "IS_Material")
+    closure  = _get(item, "IS_Closure")
+    wash     = _get(item, "IS_Fabric Wash")
+    tag_w    = _get(item, "Tag W")
+    tag_l    = _get(item, "Tag L")
+    waist    = _get(item, "Waist")
+    leg      = _get(item, "Inside Leg")
+    out_leg  = _get(item, "Out. Leg")
+    rise     = _get(item, "Rise")
+    hem      = _get(item, "Hem")
+
+    parts = []
+
+    # Opening line
+    parts.append(f"{model} {fit} jeans in {colour}.")
+
+    # Tag vs actual size
+    if tag_w and tag_l:
+        line = f"Tag size W{tag_w} L{tag_l}."
+        if waist and leg:
+            line += (f" Actual waist {waist}\" ({_to_cm(waist)}cm),"
+                     f" inside leg {leg}\" ({_to_cm(leg)}cm).")
+        parts.append(line)
+
+    # Additional measurements
+    extras = []
+    if out_leg:
+        extras.append(f"outside leg {out_leg}\"")
+    if rise:
+        extras.append(f"rise {rise}\"")
+    if hem:
+        extras.append(f"hem {hem}\"")
+    if extras:
+        parts.append("Additional measurements: " + ", ".join(extras) + ".")
+
+    # Condition notes
+    conditions = [_rewrite_condition(c) for c in item.conditions if c and c.strip()]
+    conditions = [c for c in conditions if c]
+    if conditions:
+        parts.append("Condition: " + " | ".join(conditions))
+
+    # Details line
+    details = []
+    if material:
+        details.append(f"Material: {material}")
+    if closure:
+        details.append(f"Fly: {closure}")
+    if wash:
+        details.append(f"Wash code: {wash}")
+    if details:
+        parts.append(" | ".join(details))
+
+    return "\n\n".join(parts)
+
+
 def _xpath_str(text: str) -> str:
     """Return an XPath string literal that safely handles single quotes (e.g. Levi's)."""
     if "'" not in text:
@@ -186,7 +322,7 @@ class VintedDestination(Destination):
         temp_files = self._upload_photos(driver, wait, images[::-1])
         try:
             self._fill_text(driver, wait, "[data-testid='title--input']", _build_vinted_title(item, encode_sku(item.sku)))
-            self._fill_textarea(driver, wait, "[data-testid='description--input']", _strip_html(item.description))
+            self._fill_textarea(driver, wait, "[data-testid='description--input']", _build_vinted_description(item))
             self._select_category(driver, wait, item)
             self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
                                          item["IS_Brand"])
