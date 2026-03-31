@@ -63,9 +63,10 @@ def _build_vinted_title(item, sku_tag: str) -> str:
     tag_l = _get(item, "Tag L")
     size = f"{tag_w} x {tag_l}" if tag_w and tag_l else item["IS_Size"]
     model = item['IS_Model'].title()
+    style = item['IS_Style'].title()
     fit = item['IS_Fit'].title()
     colour = item['IS_Colour'].title()
-    return f"{model} {fit} Jeans {size} {colour} #{sku_tag}"
+    return f"{model} {style} {fit} Jeans {size} {colour} #{sku_tag}"
 
 
 _CONDITION_REWRITES = [
@@ -149,6 +150,7 @@ def _build_vinted_description(item) -> str:
     model   = _get(item, "IS_Model")
     fit     = _get(item, "IS_Fit")
     colour  = _get(item, "IS_Colour")
+    style    = _get(item, "IS_Style")
     material = _get(item, "IS_Exact Material") or _get(item, "IS_Material")
     closure  = _get(item, "IS_Closure")
     wash     = _get(item, "IS_Fabric Wash")
@@ -164,6 +166,8 @@ def _build_vinted_description(item) -> str:
 
     # Opening line
     parts.append(f"{model} {fit} {colour} Jeans.")
+    if style:
+        parts.append(f"Style: {style}")
 
     parts.append(f" Measured waist size: {waist}\" ({_to_cm(waist)}cm)")
     parts.append(f" Measured inside leg: {leg}\" ({_to_cm(leg)}cm)")
