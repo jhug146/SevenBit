@@ -7,6 +7,8 @@ import random
 import threading
 import pathlib
 
+from upload.destinations.sku_codec import encode_sku
+
 import tempfile
 
 from PIL import Image
@@ -173,7 +175,7 @@ class VintedDestination(Destination):
 
         temp_files = self._upload_photos(driver, wait, images[::-1])
         try:
-            self._fill_text(driver, wait, "[data-testid='title--input']", f"{item.title.title()} ({item.sku})")
+            self._fill_text(driver, wait, "[data-testid='title--input']", f"{item.title.title()} #{encode_sku(item.sku)}")
             self._fill_textarea(driver, wait, "[data-testid='description--input']", _strip_html(item.description))
             self._select_category(driver, wait, item)
             self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
