@@ -167,6 +167,18 @@ def _build_vinted_description(item) -> str:
 
     parts.append(f" Measured waist size: {waist}\" ({_to_cm(waist)}cm)")
     parts.append(f" Measured inside leg: {leg}\" ({_to_cm(leg)}cm)")
+
+    def _differs(a, b):
+        def _num(v):
+            return float(re.sub(r'^[^\d.]+', '', str(v).strip()))
+        try:
+            return abs(_num(a) - _num(b)) >= 0.5
+        except (ValueError, TypeError):
+            return False
+
+    if (tag_w and waist and _differs(tag_w, waist)) or (tag_l and leg and _differs(tag_l, leg)):
+        parts.append("*** Please note these jeans have been listed as the measured size for a better fit and this differs from the tag size ***")
+
     # Tag vs actual size
     if tag_w:
         line = f"Tag size: W{tag_w}"
