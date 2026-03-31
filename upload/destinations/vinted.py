@@ -58,11 +58,11 @@ def _vinted_price(item) -> str:
 
 
 def _build_vinted_title(item, sku_tag: str) -> str:
-    # Parse IS_Size "W34 L32" → "34x32"
-    size_raw = item["IS_Size"]
-    m = re.match(r"W?(\d+)\s+[Ll]?(\d+)", size_raw)
-    size = f"{m.group(1)}x{m.group(2)}" if m else size_raw
-    return f"{item['IS_Model']} {item['IS_Fit']} Jeans {size} {item['IS_Colour']} #{sku_tag}"
+    tag_w = _get(item, "Tag W")
+    tag_l = _get(item, "Tag L")
+    size = f"{tag_w} x {tag_l}" if tag_w and tag_l else item["IS_Size"]
+    text = f"{item['IS_Model']} {item['IS_Fit']} Jeans {size} {item['IS_Colour']}"
+    return f"{text.title()} #{sku_tag}"
 
 
 _CONDITION_REWRITES = [
@@ -144,8 +144,8 @@ def _to_cm(inches: str) -> str:
 
 def _build_vinted_description(item) -> str:
     model   = _get(item, "IS_Model")
-    fit     = _get(item, "IS_Fit").lower()
-    colour  = _get(item, "IS_Colour").lower()
+    fit     = _get(item, "IS_Fit")
+    colour  = _get(item, "IS_Colour")
     material = _get(item, "IS_Material")
     closure  = _get(item, "IS_Closure")
     wash     = _get(item, "IS_Fabric Wash")
@@ -160,14 +160,15 @@ def _build_vinted_description(item) -> str:
     parts = []
 
     # Opening line
-    parts.append(f"{model} {fit} jeans in {colour}.")
+    parts.append(f"{model} {fit} Jeans In {colour}.")
 
+    parts.append(f" Measured waist size: {waist}\" ({_to_cm(waist)}cm)")
+    parts.append(f" Measured inside leg: {leg}\" ({_to_cm(leg)}cm)")
     # Tag vs actual size
-    if tag_w and tag_l:
-        line = f"Tag size W{tag_w} L{tag_l}."
-        if waist and leg:
-            line += (f" Actual waist {waist}\" ({_to_cm(waist)}cm),"
-                     f" inside leg {leg}\" ({_to_cm(leg)}cm).")
+    if tag_w:
+        line = f"Tag size: W{tag_w}"
+        if tag_l:
+            line += f" L{tag_l}"
         parts.append(line)
 
     # Additional measurements
@@ -377,10 +378,20 @@ class VintedDestination(Destination):
             self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
                                          "W" + item["IS_Size"])
             _wander_mouse(driver)
-            self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']",
-                                         item["IS_Colour"])
-            self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
-                                         "Denim")
+            colour_area = wait.until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "[data-testid='color-select-dropdown-input']")
+            ))
+            if item["IS_Colour"].lower() not in colour_area.text.lower():
+                try:
+                    self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']",
+                                                 item["IS_Colour"])
+                except TimeoutException:
+                    pass
+            try:
+                self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
+                                             "Denim")
+            except TimeoutException:
+                pass
             self._fill_text(driver, wait, "[data-testid='price-input--input']", _vinted_price(item))
 
             _wander_mouse(driver)
