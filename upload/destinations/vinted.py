@@ -302,6 +302,7 @@ class VintedDestination(Destination):
             options = uc.ChromeOptions()
             options.add_argument(f"--user-data-dir={profile_path}")
             self._driver = uc.Chrome(options=options, version_main=_chrome_major_version())
+            self._driver.maximize_window()
             stealth(
                 self._driver,
                 languages=["en-GB", "en"],
