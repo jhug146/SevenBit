@@ -17,6 +17,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import TimeoutException
 
 from upload.destinations.base import Destination
@@ -393,7 +394,8 @@ class VintedDestination(Destination):
                 self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
                                              "Denim")
             except TimeoutException:
-                pass
+                driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+                _human_delay(0.3, 0.6)
             self._fill_text(driver, wait, "[data-testid='price-input--input']", _vinted_price(item))
 
             _wander_mouse(driver)
