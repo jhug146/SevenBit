@@ -66,21 +66,22 @@ def _build_vinted_title(item, sku_tag: str) -> str:
     style = item['IS_Style'].title()
     fit = item['IS_Fit'].title()
     colour = item['IS_Colour'].title()
-    return f"{model} {style} {fit} Jeans {size} {colour} #{sku_tag}"
+    prefix = "NEW " if item.ebay_condition == "1000" else ""
+    return f"{prefix}{model} {style} {fit} Jeans {size} {colour} #{sku_tag}"
 
 
 _CONDITION_REWRITES = [
     # ── Main condition phrases ────────────────────────────────────────────────
     (re.compile(r"in very\s+good condition with no wear at the hems,?\s*please note that they have been taken up from their original length", re.I),
-     "Very good condition — hems have been taken up from original length"),
+     "Very good condition. Hems have been taken up from original length"),
     (re.compile(r"in good condition with no wear at the hems,?\s*please note that they have been taken up from their original length", re.I),
-     "Good condition — hems have been taken up from original length"),
+     "Good condition. Hems have been taken up from original length"),
     (re.compile(r"in good condition apart from some wear on the seam between the legs", re.I),
      "Good condition with some inner seam wear"),
     (re.compile(r"in good very condition with a bit of wear at the hems", re.I),
      "Good condition with some hem wear"),
     (re.compile(r"in good condition with a bit of wear around the edges \(pictured\)", re.I),
-     "Good condition — light edge wear visible in photos"),
+     "Good condition. Light edge wear visible in photos"),
     (re.compile(r"in good condition with no wear to the hems", re.I),
      "Good condition, hems intact"),
     (re.compile(r"in good condition with no wear at the hems", re.I),
@@ -116,9 +117,9 @@ _CONDITION_REWRITES = [
     (re.compile(r"american sizing", re.I),
      "American sizing"),
     (re.compile(r"small for size,?\s*possibly a (W?\d+)", re.I),
-     r"Comes up small — likely a \1"),
+     r"Comes up small, likely a \1"),
     (re.compile(r"big for size,?\s*possibly a (W?\d+)", re.I),
-     r"Comes up large — likely a \1"),
+     r"Comes up large, likely a \1"),
     # ── Cleanup ──────────────────────────────────────────────────────────────
     (re.compile(r"\s*[--]\s*please see actual measurements?\.?", re.I), ""),
     (re.compile(r"\s*please see actual measurements?\.?", re.I), ""),
@@ -165,12 +166,11 @@ def _build_vinted_description(item) -> str:
     parts = []
 
     # Opening line
-    parts.append(f"{model} {fit} {colour} Jeans.")
-    if style:
-        parts.append(f"Style: {style}")
+    prefix = "NEW " if item.ebay_condition == "1000" else ""
+    parts.append(f"{prefix}{model} {style} {fit} {colour} Jeans." if style else f"{prefix}{model} {fit} {colour} Jeans.")
 
-    parts.append(f" Measured waist size: {waist}\" ({_to_cm(waist)}cm)")
-    parts.append(f" Measured inside leg: {leg}\" ({_to_cm(leg)}cm)")
+    parts.append(f"Measured waist size: {waist}\" ({_to_cm(waist)}cm)")
+    parts.append(f"Measured inside leg: {leg}\" ({_to_cm(leg)}cm)")
 
     def _differs(a, b):
         def _num(v):
@@ -207,16 +207,12 @@ def _build_vinted_description(item) -> str:
     if conditions:
         parts.append("Condition: " + " | ".join(conditions))
 
-    # Details line
-    details = []
     if material:
-        details.append(f"Material: {material}")
+        parts.append(f"Material: {material}")
     if closure:
-        details.append(f"Fly: {closure}")
+        parts.append(f"Fly: {closure}")
     if wash:
-        details.append(f"Wash code: {wash}")
-    if details:
-        parts.append(" | ".join(details))
+        parts.append(f"Wash code: {wash}")
 
     return "\n\n".join(parts)
 
