@@ -425,18 +425,38 @@ class VintedDestination(Destination):
             except TimeoutException:
                 pass
             _human_delay(0.5, 1.0)
-            save_btn = wait.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
-            ))
-            ActionChains(driver).move_to_element(save_btn).perform()
-            _human_delay(0.3, 0.8)
-            ActionChains(driver).click(save_btn).perform()
-            _human_delay(2.0, 4.0)
+            uploaded = False
+            try:
+                save_btn = wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
+                ))
+                ActionChains(driver).move_to_element(save_btn).perform()
+                _human_delay(0.3, 0.8)
+                ActionChains(driver).click(save_btn).perform()
+                _human_delay(2.0, 4.0)
+                uploaded = "items/new" not in self._driver.current_url
+            except Exception:
+                pass
 
-            if "items/new" not in self._driver.current_url:
+            if uploaded:
                 return UploadResult(UploadStatus.SUCCESS, message=f"Vinted: {item.sku} uploaded")
+
+            # Upload button failed or page didn't navigate — fall back to Save Draft
+            try:
+                draft_btn = wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "[data-testid='upload-form-save-draft-button']")
+                ))
+                ActionChains(driver).move_to_element(draft_btn).perform()
+                _human_delay(0.3, 0.8)
+                ActionChains(driver).click(draft_btn).perform()
+                _human_delay(2.0, 4.0)
+                return UploadResult(UploadStatus.WARNING,
+                                    message=f"Vinted: {item.sku} saved as draft — upload button did not work")
+            except Exception:
+                pass
+
             return UploadResult(UploadStatus.FAILURE,
-                                message="Vinted: page did not navigate after submit — check browser")
+                                message="Vinted: page did not navigate after submit and save draft also failed — check browser")
         finally:
             for f in temp_files:
                 try:
