@@ -13,6 +13,7 @@ import tempfile
 
 from PIL import Image
 import undetected_chromedriver as uc
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -385,9 +386,9 @@ class VintedDestination(Destination):
 
     def _fill_text(self, driver, wait, selector: str, text: str):
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        ActionChains(driver).move_to_element(element).perform()
         _human_delay(0.2, 0.4)
-        driver.execute_script("arguments[0].click();", element)
+        ActionChains(driver).click(element).perform()
         _human_delay(0.2, 0.5)
         element.clear()
         for char in text:
@@ -435,9 +436,9 @@ class VintedDestination(Destination):
     def _select_dropdown_option(self, driver, wait, trigger_selector: str, option_text: str):
         """Open a dropdown, scroll to the matching option, and click it."""
         trigger = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, trigger_selector)))
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", trigger)
+        ActionChains(driver).move_to_element(trigger).perform()
         _human_delay(0.3, 0.6)
-        driver.execute_script("arguments[0].click();", trigger)
+        ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
         self._scroll_and_click(driver, wait, option_text)
         _human_delay(0.5, 1.0)
