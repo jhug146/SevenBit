@@ -6,7 +6,7 @@ _A_INV = pow(_A, -1, _MOD)
 
 def encode_sku(sku: str) -> str:
     """SK-123456  →  1AF3C  (5-char hex wash code)"""
-    n = int(sku.removeprefix("SK-"))
+    n = int(sku[3:] if sku.startswith("SK-") else sku)
     m = (_A * n + _B) % _MOD
     return format(m, "05X")
 
