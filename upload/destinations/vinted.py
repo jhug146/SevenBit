@@ -24,9 +24,6 @@ from upload.destinations.base import Destination
 from upload.models.upload_result import UploadResult, UploadStatus
 
 
-_FIT_TO_CATEGORY = {
-    "Slim": "Slim fit jeans",
-}
 
 
 _CONDITION_MAP = {
@@ -54,6 +51,16 @@ def _strip_html(text: str) -> str:
     return ' '.join(text.split())
 
 
+def _dedup_words(text: str) -> str:
+    seen = set()
+    words = []
+    for word in text.split():
+        if word.lower() not in seen:
+            seen.add(word.lower())
+            words.append(word)
+    return " ".join(words)
+
+
 def _vinted_price(item) -> str:
     return str(int((float(item.price) - 2.40) / 1.06))
 
@@ -67,7 +74,7 @@ def _build_vinted_title(item, sku_tag: str) -> str:
     fit = item['IS_Fit'].title()
     colour = item['IS_Colour'].title()
     prefix = "NEW " if item.ebay_condition == "1000" else ""
-    return f"{prefix}{model} {style} {fit} Jeans {size} {colour} #{sku_tag}"
+    return _dedup_words(f"{prefix}{model} {style} {fit} Jeans {size} {colour}") + f" #{sku_tag}"
 
 
 _CONDITION_REWRITES = [
@@ -167,7 +174,8 @@ def _build_vinted_description(item) -> str:
 
     # Opening line
     prefix = "NEW " if item.ebay_condition == "1000" else ""
-    parts.append(f"{prefix}{model} {style} {fit} {colour} Jeans." if style else f"{prefix}{model} {fit} {colour} Jeans.")
+    first_line = f"{prefix}{model} {style} {fit} {colour} Jeans." if style else f"{prefix}{model} {fit} {colour} Jeans."
+    parts.append(_dedup_words(first_line.rstrip(".")) + ".")
 
     parts.append(f"Measured waist size: {waist}\" ({_to_cm(waist)}cm)")
     parts.append(f"Measured inside leg: {leg}\" ({_to_cm(leg)}cm)")
@@ -205,7 +213,7 @@ def _build_vinted_description(item) -> str:
     conditions = [_rewrite_condition(c) for c in item.conditions if c and c.strip()]
     conditions = [c for c in conditions if c]
     if conditions:
-        parts.append("Condition: " + " | ".join(conditions))
+        parts.append("Condition: " + ". ".join(conditions))
 
     if material:
         parts.append(f"Material: {material}")
@@ -398,13 +406,25 @@ class VintedDestination(Destination):
                 self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
                                              "Denim")
             except TimeoutException:
-                driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
-                _human_delay(0.3, 0.6)
+                pass
+            driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+            _human_delay(0.3, 0.6)
             self._fill_text(driver, wait, "[data-testid='price-input--input']", _vinted_price(item))
 
             _wander_mouse(driver)
             self._remove_wrong_colours(driver, item["IS_Colour"])
-            _human_delay(0.8, 1.5)
+            _human_delay(0.5, 1.0)
+            try:
+                medium_parcel = wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, "[data-testid='package_type_selector_2--input']")
+                ))
+                ActionChains(driver).move_to_element(medium_parcel).perform()
+                _human_delay(0.2, 0.5)
+                ActionChains(driver).click(medium_parcel).perform()
+                _human_delay(0.3, 0.7)
+            except TimeoutException:
+                pass
+            _human_delay(0.5, 1.0)
             save_btn = wait.until(EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
             ))
@@ -498,8 +518,16 @@ class VintedDestination(Destination):
 
     def _select_category(self, driver, wait, item):
         """Open the category modal and navigate the hierarchy by scrolling and clicking."""
+        style = item["IS_Style"]
         fit = item["IS_Fit"]
-        category_label = _FIT_TO_CATEGORY.get(fit, "Straight fit jeans")
+        if style == "Straight":
+            category_label = "Straight fit jeans"
+        elif style == "Skinny":
+            category_label = "Skinny fit jeans"
+        elif fit == "Slim":
+            category_label = "Slim fit jeans"
+        else:
+            category_label = "Straight fit jeans"
         department = "Men" if item["IS_Department"] == "Men" else "Women"
 
         trigger = wait.until(EC.element_to_be_clickable(
