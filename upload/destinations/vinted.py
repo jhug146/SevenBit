@@ -51,6 +51,11 @@ def _strip_html(text: str) -> str:
     return ' '.join(text.split())
 
 
+def _title_case(text: str) -> str:
+    """Like str.title() but doesn't capitalise the letter after an apostrophe (e.g. Levi's not Levi'S)."""
+    return re.sub(r"'([A-Z])", lambda m: "'" + m.group(1).lower(), text.title())
+
+
 def _dedup_words(text: str) -> str:
     seen = set()
     words = []
@@ -66,13 +71,13 @@ def _vinted_price(item) -> str:
 
 
 def _build_vinted_title(item, sku_tag: str) -> str:
-    tag_w = _get(item, "Tag W")
-    tag_l = _get(item, "Tag L")
-    size = f"{tag_w} x {tag_l}" if tag_w and tag_l else item["IS_Size"]
-    model = item['IS_Model'].title()
-    style = item['IS_Style'].title()
-    fit = item['IS_Fit'].title()
-    colour = item['IS_Colour'].title()
+    waist = _get(item, "Waist")
+    leg = _get(item, "Inside Leg")
+    size = f"{waist} x {leg}" if waist and leg else item["IS_Size"]
+    model = _title_case(item['IS_Model'])
+    style = _title_case(item['IS_Style'])
+    fit = _title_case(item['IS_Fit'])
+    colour = _title_case(item['IS_Colour'])
     prefix = "NEW " if item.ebay_condition == "1000" else ""
     return _dedup_words(f"{prefix}{model} {style} {fit} Jeans {size} {colour}") + f" #{sku_tag}"
 
