@@ -13,6 +13,7 @@ import tempfile
 
 from PIL import Image
 import undetected_chromedriver as uc
+from selenium_stealth import stealth
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -297,6 +298,15 @@ class VintedDestination(Destination):
             options = uc.ChromeOptions()
             options.add_argument(f"--user-data-dir={profile_path}")
             self._driver = uc.Chrome(options=options, version_main=_chrome_major_version())
+            stealth(
+                self._driver,
+                languages=["en-GB", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+            )
             self._driver.get(self._SELL_URL)
 
     def upload_images(self, paths: str, sku: str, title: str, display) -> list | None:
