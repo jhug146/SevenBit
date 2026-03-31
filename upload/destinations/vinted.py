@@ -491,6 +491,10 @@ class VintedDestination(Destination):
             self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']", colour)
         except TimeoutException:
             pass
+        # Explicitly close the dropdown before moving on to prevent
+        # subsequent mouse movements landing on still-open colour options
+        driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
+        _human_delay(0.3, 0.6)
 
     def _select_category(self, driver, wait, item):
         """Open the category modal and navigate the hierarchy by scrolling and clicking."""
@@ -550,7 +554,7 @@ class VintedDestination(Destination):
         _l = "abcdefghijklmnopqrstuvwxyz"
         def _lc(expr):
             return f"translate(normalize-space({expr}),'{_U}','{_l}')"
-        element = wait.until(EC.presence_of_element_located((By.XPATH,
+        element = wait.until(EC.element_to_be_clickable((By.XPATH,
             f"{prefix}[{_lc('.')}={s}] | "
             f"{prefix}[.//span[{_lc('.')}={s}]] | "
             f"{prefix}[.//button[{_lc('.')}={s}]]"
