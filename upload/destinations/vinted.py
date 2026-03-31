@@ -54,6 +54,10 @@ def _strip_html(text: str) -> str:
     return ' '.join(text.split())
 
 
+def _vinted_price(item) -> str:
+    return str(int((float(item.price) - 2.40) / 1.06))
+
+
 def _build_vinted_title(item, sku_tag: str) -> str:
     # Parse IS_Size "W34 L32" → "34x32"
     size_raw = item["IS_Size"]
@@ -380,7 +384,7 @@ class VintedDestination(Destination):
                                          item["IS_Colour"])
             self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
                                          "Denim")
-            self._fill_text(driver, wait, "[data-testid='price-input--input']", str(item.price))
+            self._fill_text(driver, wait, "[data-testid='price-input--input']", _vinted_price(item))
 
             _wander_mouse(driver)
             _human_delay(0.8, 1.5)
