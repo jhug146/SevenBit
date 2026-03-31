@@ -301,8 +301,9 @@ class VintedDestination(Destination):
             profile_path.mkdir(parents=True, exist_ok=True)
             options = uc.ChromeOptions()
             options.add_argument(f"--user-data-dir={profile_path}")
+            options.add_argument("--start-maximized")
+            options.add_argument("--window-size=1920,1080")
             self._driver = uc.Chrome(options=options, version_main=_chrome_major_version())
-            self._driver.maximize_window()
             _human_delay(1.5, 2.5)
             stealth(
                 self._driver,
@@ -343,21 +344,18 @@ class VintedDestination(Destination):
         driver = self._driver
         wait = WebDriverWait(driver, 20)
 
-        if random.random() < 0.4:
-            driver.get(random.choice(self._BROWSE_URLS))
-            _human_delay(4.0, 10.0)
-            self._dismiss_cookies(driver)
-
         driver.get(self._SELL_URL)
         _human_delay(1.5, 3.0)
 
         self._dismiss_cookies(driver)
 
+        already_logged_in = True
         try:
             WebDriverWait(driver, 5).until(EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "[data-testid='add-photos-input']")
             ))
         except TimeoutException:
+            already_logged_in = False
             if self._display:
                 self._display.push_error("Vinted: not logged in — please log in in the browser window, upload will resume automatically", "")
             self._dismiss_cookies(driver)
@@ -366,6 +364,13 @@ class VintedDestination(Destination):
             ))
             _human_delay(1.0, 2.0)
             self._dismiss_cookies(driver)
+
+        if already_logged_in and random.random() < 0.4:
+            driver.get(random.choice(self._BROWSE_URLS))
+            _human_delay(4.0, 10.0)
+            self._dismiss_cookies(driver)
+            driver.get(self._SELL_URL)
+            _human_delay(1.5, 3.0)
 
         temp_files = self._upload_photos(driver, wait, images[::-1])
         try:
