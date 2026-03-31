@@ -397,15 +397,7 @@ class VintedDestination(Destination):
             self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
                                          "W" + item["IS_Size"])
             _wander_mouse(driver)
-            colour_area = wait.until(EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "[data-testid='color-select-dropdown-input']")
-            ))
-            if item["IS_Colour"].lower() not in colour_area.text.lower():
-                try:
-                    self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']",
-                                                 item["IS_Colour"])
-                except TimeoutException:
-                    pass
+            self._clear_and_select_colour(driver, wait, item["IS_Colour"])
             try:
                 self._select_dropdown_option(driver, wait, "[data-testid='category-material-multi-list-input']",
                                              "Denim")
@@ -415,6 +407,7 @@ class VintedDestination(Destination):
             self._fill_text(driver, wait, "[data-testid='price-input--input']", _vinted_price(item))
 
             _wander_mouse(driver)
+            self._remove_wrong_colours(driver, item["IS_Colour"])
             _human_delay(0.8, 1.5)
             save_btn = wait.until(EC.element_to_be_clickable(
                 (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
@@ -478,6 +471,30 @@ class VintedDestination(Destination):
 
     def _fill_textarea(self, driver, wait, selector: str, text: str):
         self._fill_text(driver, wait, selector, text)
+
+    def _remove_wrong_colours(self, driver, correct_colour: str):
+        """Remove any colour chips that don't match the intended colour."""
+        try:
+            colour_area = driver.find_element(By.CSS_SELECTOR, "[data-testid='color-select-dropdown-input']")
+            chips = colour_area.find_elements(By.CSS_SELECTOR,
+                "[data-testid*='close'], [data-testid*='remove'], [aria-label*='emove'], button[class*='close'], button[class*='remove']"
+            )
+            for chip in chips:
+                try:
+                    label = chip.get_attribute("aria-label") or chip.find_element(By.XPATH, "..").text
+                    if correct_colour.lower() not in label.lower():
+                        ActionChains(driver).move_to_element(chip).click(chip).perform()
+                        _human_delay(0.2, 0.4)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    def _clear_and_select_colour(self, driver, wait, colour: str):
+        try:
+            self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']", colour)
+        except TimeoutException:
+            pass
 
     def _select_category(self, driver, wait, item):
         """Open the category modal and navigate the hierarchy by scrolling and clicking."""
