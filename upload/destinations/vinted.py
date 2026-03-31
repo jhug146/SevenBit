@@ -25,6 +25,8 @@ from upload.models.upload_result import UploadResult, UploadStatus
 _FIT_TO_CATEGORY = {
     "Slim": "Slim fit jeans",
 }
+
+
 _CONDITION_MAP = {
     "1000": "New with tags",
     "2990": "Very good",
@@ -48,6 +50,14 @@ def _strip_html(text: str) -> str:
     text = re.sub(r'<[^>]+>', ' ', text)
     text = html.unescape(text)
     return ' '.join(text.split())
+
+
+def _build_vinted_title(item, sku_tag: str) -> str:
+    # Parse IS_Size "W34 L32" → "34x32"
+    size_raw = item["IS_Size"]
+    m = re.match(r"W?(\d+)\s+[Ll]?(\d+)", size_raw)
+    size = f"{m.group(1)}x{m.group(2)}" if m else size_raw
+    return f"{item['IS_Model']} {item['IS_Fit']} Jeans {size} {item['IS_Colour']} #{sku_tag}"
 
 
 def _xpath_str(text: str) -> str:
@@ -175,7 +185,7 @@ class VintedDestination(Destination):
 
         temp_files = self._upload_photos(driver, wait, images[::-1])
         try:
-            self._fill_text(driver, wait, "[data-testid='title--input']", f"{item.title.title()} #{encode_sku(item.sku)}")
+            self._fill_text(driver, wait, "[data-testid='title--input']", _build_vinted_title(item, encode_sku(item.sku)))
             self._fill_textarea(driver, wait, "[data-testid='description--input']", _strip_html(item.description))
             self._select_category(driver, wait, item)
             self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
