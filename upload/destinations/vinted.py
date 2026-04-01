@@ -548,7 +548,7 @@ class VintedDestination(Destination):
         if style == "Straight":
             category_label = "Straight fit jeans"
         elif style == "Skinny":
-            category_label = "Skinny fit jeans"
+            category_label = "Skinny jeans"
         elif fit == "Slim":
             category_label = "Slim fit jeans"
         else:
