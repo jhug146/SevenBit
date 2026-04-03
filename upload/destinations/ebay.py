@@ -194,7 +194,6 @@ class EbaySiteDestination(Destination):
         shipping_id = policies["shipping"][self.site_num]
         returns_id = policies["returns"][self.site_num]
 
-        store_category = self.accounts.store_category
         request = {
             "Item": {
                 "Title": details.title,
@@ -222,7 +221,7 @@ class EbaySiteDestination(Destination):
                 },
                 "PostalCode": self.upload_config.postcode,
                 "Storefront": {
-                    "StoreCategoryID": store_category
+                    "StoreCategoryID": details.specifics["eBay Store Category1ID"]
                 },
                 "ItemSpecifics": {
                     "NameValueList": item_specific_list
