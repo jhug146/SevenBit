@@ -11,7 +11,7 @@ def display_error(message, message_type="Error"):
 
 def get_csv_as_list(file, headers):
     try:
-        with open(file) as csv_file:
+        with open(file, encoding="utf-8") as csv_file:
             reader = csv.reader(csv_file, delimiter=",")
             final = []
             for row in reader:

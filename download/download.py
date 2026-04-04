@@ -21,7 +21,7 @@ def split_list(to_split, length):
 
 
 def write_csv(file, data):
-    with open(file, "w", newline="") as csvfile:
+    with open(file, "w", newline="", encoding="utf-8") as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=",")
         for row in data:
             csvwriter.writerow(row)
