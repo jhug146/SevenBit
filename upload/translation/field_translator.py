@@ -55,6 +55,10 @@ class FieldTranslator:
                             detail_add = self.translators[country_index - 3].translate_batch([detail])
                             if not type(detail_add) is str:
                                 detail_add = detail_add[0]
+                            try:
+                                detail_add = detail_add.encode('latin-1').decode('utf-8')
+                            except (UnicodeDecodeError, UnicodeEncodeError):
+                                pass
                             break
                         except AttributeError as error:
                             print(error)
