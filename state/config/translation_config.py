@@ -7,9 +7,6 @@ class TranslationConfig(BaseConfig):
         self._validate()
 
     @property
-    def fastforex_api_key(self): return self._data["fastforex-api-key"]
-
-    @property
     def country_codes(self): return self._data["country_codes"]
 
     @property

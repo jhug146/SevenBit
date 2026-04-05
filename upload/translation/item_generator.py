@@ -29,7 +29,7 @@ class ItemGenerator:
         self.translation_config = translation_config
         self.accounts = accounts
         self.rates = requests.get(
-            f"https://api.fastforex.io/fetch-multi?from=USD&to=EUR,AUD,GBP&api_key={translation_config.fastforex_api_key}",
+            f"https://api.fastforex.io/fetch-multi?from=USD&to=EUR,AUD,GBP&api_key={accounts.fastforex_api_key}",
             headers={"Accept": "application/json"}
         ).json()["results"]
         self.usd_rate = 1 / self.rates["GBP"]

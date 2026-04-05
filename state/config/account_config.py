@@ -37,6 +37,9 @@ class AccountConfig(BaseConfig):
     @property
     def website_images(self): return self._current["website"]["images"]
 
+    @property
+    def fastforex_api_key(self): return self._current["fastforex-api-key"]
+
     def policies(self, item_type_name): return self._current["policies"][item_type_name]
 
     def set_upload_attr(self, upload):
