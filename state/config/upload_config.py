@@ -25,15 +25,6 @@ class UploadConfig(BaseConfig):
     def picture_data(self): return self._data["pictureData"]
 
     @property
-    def website_url(self): return self._data["website"]["url"]
-
-    @property
-    def website_images(self): return self._data["website"]["images"]
-
-    @property
-    def website_item(self): return self._data["website"]["item"]
-
-    @property
     def condition_opening(self): return self._data["condition_opening"]
 
     @property

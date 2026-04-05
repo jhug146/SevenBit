@@ -27,7 +27,7 @@ class WebApp:
         translator = EbayTranslator(item_type.translation, upload_changer, item_type.accounts)
 
         ebay_image_store = EbayImageStore(item_type.accounts, item_type.upload, upload_changer)
-        website_dest = WebsiteDestination(item_type.upload)
+        website_dest = WebsiteDestination(item_type.upload, item_type.accounts)
         vinted_dest = VintedDestination(item_type.upload)
 
         destinations = [

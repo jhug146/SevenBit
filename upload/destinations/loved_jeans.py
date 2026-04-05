@@ -12,8 +12,9 @@ from upload.models.upload_result import UploadResult, UploadStatus
 class WebsiteDestination(Destination):
     """Handles image and item uploads to a custom website (e.g. lovedjeans.co.uk)."""
 
-    def __init__(self, upload_config):
+    def __init__(self, upload_config, account_config):
         self.upload_config = upload_config
+        self.account_config = account_config
         self.client = requests.session()
         self._image_store = ImageStore()
 
@@ -40,8 +41,8 @@ class WebsiteDestination(Destination):
         return self._image_store.get(sku, self._do_upload_images, paths, sku, title, display)
 
     def _do_upload_images(self, paths: str, sku: str, title: str, display) -> list | None:
-        website_data = self.upload_config.website_images
-        url = self.upload_config.website_url + website_data["url"]
+        website_data = self.account_config.website_images
+        url = self.account_config.website_url + website_data["url"]
 
         path_list = paths.split(";")
         while path_list[-1] == "":
@@ -78,7 +79,7 @@ class WebsiteDestination(Destination):
 
     def upload_item(self, item_batch, images, listing_number: int) -> UploadResult:
         item = item_batch.default
-        website_data = self.upload_config.website_item
+        website_data = self.account_config.website_item
         to_upload = {}
         for key, value in self.upload_config.field_mapping.items():
             to_upload[value] = item[key]
@@ -86,7 +87,7 @@ class WebsiteDestination(Destination):
         to_upload["paths"] = ";" * (item_batch.images.count(";") - 1)
         try:
             response = self.client.post(
-                self.upload_config.website_url + website_data["url"],
+                self.account_config.website_url + website_data["url"],
                 data={
                     "item": json.dumps(to_upload),
                     "username": website_data["username"],

@@ -12,13 +12,10 @@ from .upload_display import ScrollableFrame
 from .utils import display_error
 
 
-WEBSITE_URL = "https://www.lovedjeans.co.uk"
-
-
-def deleter_status_message(upload_config):
+def deleter_status_message(account_config):
     try:
-        website_data = upload_config.website_item
-        response = requests.post(WEBSITE_URL + "/is_deleter_running/", data={
+        website_data = account_config.website_item
+        response = requests.post(account_config.website_url + "/is_deleter_running/", data={
             "username": website_data["username"],
             "password": website_data["password"]
         })
@@ -116,7 +113,7 @@ class UI(BaseUI):
             child.destroy()
 
     def update_title(self, accounts):
-        self.window.title(f"SevenBit - {accounts.name} - {self.upload_config.name} - {deleter_status_message(self.upload_config)}")
+        self.window.title(f"SevenBit - {accounts.name} - {self.upload_config.name} - {deleter_status_message(accounts)}")
 
     def make_font(self, size):
         return tkinter.font.Font(self.window, family="Helvetica", size=size)

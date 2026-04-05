@@ -28,6 +28,15 @@ class AccountConfig(BaseConfig):
     @property
     def build_condition(self): return self._current["build_condition"]
 
+    @property
+    def website_url(self): return self._current["website"]["url"]
+
+    @property
+    def website_item(self): return self._current["website"]["item"]
+
+    @property
+    def website_images(self): return self._current["website"]["images"]
+
     def policies(self, item_type_name): return self._current["policies"][item_type_name]
 
     def set_upload_attr(self, upload):
