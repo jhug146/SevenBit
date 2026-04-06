@@ -79,7 +79,8 @@ def _build_vinted_title(item, sku_tag: str) -> str:
     fit = _title_case(item['IS_Fit'])
     colour = _title_case(item['IS_Colour'])
     prefix = "NEW " if item.ebay_condition == "1000" else ""
-    return _dedup_words(f"{prefix}{model} {style} {fit} Jeans {size} {colour}") + f" #{sku_tag}"
+    jeans = "Stretch Jeans" if _get(item, "IS_Features") == "Stretch" else "Jeans"
+    return _dedup_words(f"{prefix}{model} {style} {fit} {jeans} {size} {colour}") + f" #{sku_tag}"
 
 
 _CONDITION_REWRITES = [
