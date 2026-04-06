@@ -545,15 +545,26 @@ class VintedDestination(Destination):
         """Open the category modal and navigate the hierarchy by scrolling and clicking."""
         style = item["IS_Style"]
         fit = item["IS_Fit"]
-        if style == "Straight":
-            category_label = "Straight fit jeans"
-        elif style == "Skinny":
-            category_label = "Skinny jeans"
-        elif fit == "Slim":
-            category_label = "Slim fit jeans"
+        is_women = item["IS_Department"] != "Men"
+        if is_women:
+            if style in ("Bootcut", "Flared", "Wide-Leg"):
+                category_label = "Flared jeans"
+            elif style == "Boyfriend":
+                category_label = "Boyfriend jeans"
+            elif style in ("Skinny", "Tapered"):
+                category_label = "Skinny jeans"
+            else:
+                category_label = "Straight jeans"
         else:
-            category_label = "Straight fit jeans"
-        department = "Men" if item["IS_Department"] == "Men" else "Women"
+            if style == "Straight":
+                category_label = "Straight fit jeans"
+            elif style == "Skinny":
+                category_label = "Skinny jeans"
+            elif fit == "Slim":
+                category_label = "Slim fit jeans"
+            else:
+                category_label = "Straight fit jeans"
+        department = "Women" if is_women else "Men"
 
         trigger = wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "[data-testid='catalog-select-dropdown-input']")
