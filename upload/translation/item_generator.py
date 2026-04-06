@@ -88,6 +88,8 @@ class ItemGenerator:
                     return self.get_info(return_val)
             elif operator == "Eq":
                 if first_val == item[second_val]:
+                    if return_val in self.trans_data:
+                        return self.trans_data[return_val][country_num]
                     return self.get_info(return_val)
                 elif first_val in self.trans_data:
                     if "&" in return_val:
