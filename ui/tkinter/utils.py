@@ -17,7 +17,7 @@ def get_csv_as_list(file, headers):
             for row in reader:
                 final.append(row)
         if headers:
-            return final[0], final[1:]
+            return [h.strip() for h in final[0]], final[1:]
         else:
             return final
     except:

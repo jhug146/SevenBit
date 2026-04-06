@@ -71,8 +71,8 @@ def _vinted_price(item) -> str:
 
 
 def _build_vinted_title(item, sku_tag: str) -> str:
-    waist = _get(item, "Waist")
-    leg = _get(item, "Inside Leg")
+    waist = _get(item, "Waist").strip()
+    leg = _get(item, "Inside Leg").strip()
     size = f"{waist} x {leg}" if waist and leg else item["IS_Size"]
     model = _title_case(item['IS_Model'])
     style = _title_case(item['IS_Style'])
