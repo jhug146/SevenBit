@@ -67,7 +67,7 @@ def _dedup_words(text: str) -> str:
 
 
 def _vinted_price(item) -> str:
-    return str(int((float(item.price) - 2.40) / 1.06))
+    return str(int((float(item.price) - 2.40) / 1.06 + 3.00))
 
 
 def _build_vinted_title(item, sku_tag: str) -> str:
