@@ -67,9 +67,9 @@ class EbayImageStore:
         self._image_store.clear(sku)
 
     def _do_upload(self, paths: str, sku: str, display) -> list | None:
-        path_list = paths.split(";")
-        if path_list[-1] == "":
-            path_list.pop()
+        path_list = [p for p in paths.split(";") if p]
+        if not path_list:
+            return None
 
         if all("http" in path for path in path_list):
             return path_list

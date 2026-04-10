@@ -44,9 +44,10 @@ class WebsiteDestination(Destination):
         website_data = self.account_config.website_images
         url = self.account_config.website_url + website_data["url"]
 
-        path_list = paths.split(";")
-        while path_list[-1] == "":
-            path_list.pop()
+        path_list = [p for p in paths.split(";") if p]
+        if not path_list:
+            display.push_error(Exception(f"No image paths provided for {sku}"), sku)
+            return None
 
         using_urls = "http" in path_list[0]
         data = {
