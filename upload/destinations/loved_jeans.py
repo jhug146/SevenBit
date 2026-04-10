@@ -67,7 +67,12 @@ class WebsiteDestination(Destination):
                         images[f"file{i}"] = f.read()
                 response = self.client.post(url, data=data, files=images)
 
-            result = json.loads(response.text[len("Success - Images uploaded: "):])
+            response.raise_for_status()
+
+            PREFIX = "Success - Images uploaded: "
+            if not response.text.startswith(PREFIX):
+                raise Exception(f"Unexpected image upload response: {response.text!r}")
+            result = json.loads(response.text[len(PREFIX):])
 
             if isinstance(result, list):
                 return result
