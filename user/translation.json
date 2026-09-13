@@ -394,7 +394,17 @@
           "Corduroy": "Velours Côtelé"
         },
         "IS_Size": {
-          "Straight": "Droit"
+          "^([0-9]|[12][0-9]|3[01]|33|35)$": "Taille unique"
+        },
+        "IS_Style": {
+          "Straight": "Droit",
+          "Flared": "Évasé",
+          "Wide-Leg": "Jambe Large"
+        },
+        "IS_Leg Style": {
+          "Straight": "Droit",
+          "Flared": "Évasé",
+          "Wide-Leg": "Jambe Large"
         },
         "IS_Features": {
           "Cotton": "Coton",
@@ -756,6 +766,9 @@
         "IS_Type": {
           "Jeans": "Pantalones"
         },
+        "IS_Size": {
+          "^([0-9]|[12][0-9]|3[01]|33|35)$": "Talla única"
+        },
         "IS_Vintage": {
           "Yes": "Si"
         },
@@ -849,17 +862,20 @@
       "Straight": [
         "Recto",
         "Dritto",
-        "Gerades Bein"
+        "Gerades Bein",
+        "Droit"
       ],
       "Flared": [
         "Acampanado",
         "A zampa",
-        "Schlaghose"
+        "Schlaghose",
+        "Évasé"
       ],
       "Wide-Leg": [
         "Ancho",
         "Con fondo ampio",
-        "Weites Bein"
+        "Weites Bein",
+        "Jambe Large"
       ],
       "Tapered": [
         "Affusalato"
