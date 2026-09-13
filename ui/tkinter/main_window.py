@@ -98,6 +98,10 @@ class UI(BaseUI):
     def show_error(self, message):
         tkinter.messagebox.showerror("Error", message)
 
+    def show_errors(self, messages):
+        if messages:
+            tkinter.messagebox.showerror("Error", "\n".join(messages))
+
     def tick(self):
         self.window.update()
 
@@ -187,6 +191,8 @@ class UI(BaseUI):
             for widget in self.img_frame.winfo_children():
                 widget.destroy()
 
+            image_errors = []
+
             def reorder(number):
                 """
                 Re-orders the current images by moving the selected image and the following image to the beggining of the images
@@ -224,12 +230,10 @@ class UI(BaseUI):
                 """
                 if "http" in path:
                     return None
-                try:
-                    img = Image.open(path).resize((110, 110), Image.LANCZOS)
-                except FileNotFoundError:
-                    self.show_error(f"Error loading image: {path}")
+                imgr, error = self._load_photo_image(path, (110, 110))
+                if error:
+                    image_errors.append(error)
                     return None
-                imgr = PhotoImage(img)
                 box = tk.Label(self.img_frame, image=imgr)
                 box.image = imgr
                 box.grid(row=row, column=col)
@@ -245,6 +249,8 @@ class UI(BaseUI):
                     place_image(img, 0, i, i)
                 else:
                     place_image(img, 1, i - 6, i)
+
+            self.show_errors(image_errors)
 
         def save_current():
             """
@@ -300,7 +306,14 @@ class UI(BaseUI):
         """
         if self.item_list.items is not None:
             if isinstance(self.item_list.items, list):
+                try:
+                    scroll_pos = self.content_scroll.canvas.yview()[0]
+                except AttributeError:
+                    scroll_pos = None
                 self.show_items()
+                if scroll_pos is not None:
+                    self.content_scroll.canvas.update_idletasks()
+                    self.content_scroll.canvas.yview_moveto(scroll_pos)
                 self.view_item(view_num)
 
     def show_items(self):
@@ -318,6 +331,7 @@ class UI(BaseUI):
         self.content_frame = tk.Frame(self.content_scroll.scrollable_frame, width=1000, height=2000)
         self.content_frame.place(x=0, y=0)
 
+        image_errors = []
         for c, item in enumerate(self.item_list.items):
             item_frame = tk.Frame(self.content_frame, width=round(self.scrw * 0.9), height=round(self.scrh / 200), borderwidth=1, relief="solid")
             self.frames_list.append(item_frame)
@@ -326,12 +340,16 @@ class UI(BaseUI):
                 if detail[1] != "Path":
                     tk.Label(item_frame, relief="solid", borderwidth=1, text=item[detail[1]], height=round(self.scrh / 500), width=round(detail[2])).grid(row=0, column=detail[0])
                 else:
-                    try:
-                        self.place_table_image(item_frame, item[detail[1]].split(";")[0]).grid(row=0, column=0)
-                    except FileNotFoundError:
-                        self.show_error(f"Error loading image: {item[detail[1]].split(';')[0]}")
+                    path = item[detail[1]].split(";")[0]
+                    box, error = self.place_table_image(item_frame, path)
+                    if box is not None:
+                        box.grid(row=0, column=0)
+                    if error:
+                        image_errors.append(error)
 
             tk.Button(item_frame, font=self.small_font, relief="ridge", text="View", height=1, width=round(self.scrw / 100), command=lambda x=c: self.view_item(x)).grid(row=0, column=4)
+
+        self.show_errors(image_errors)
 
     def get_options(self, upload_obj, start=""):
         """
@@ -379,12 +397,19 @@ class UI(BaseUI):
         tk.Button(self.options_win, width=15, bg="#124e71", fg="white", font=self.small_font, text="Starting Point", command=start_point).place(x=5, y=75)
         self.start_point_entry.bind("<Return>", lambda x: start_point())
 
+    def _load_photo_image(self, path, size):
+        try:
+            img = Image.open(path).resize(size, Image.LANCZOS)
+        except FileNotFoundError:
+            return None, f"Error loading image: {path}"
+        return PhotoImage(img), None
+
     def place_table_image(self, frame, path):
         if "http" in path:
             path = "images/blank.png"
-        img = Image.open(path)
-        img = img.resize((34,30), Image.LANCZOS)
-        imgr = PhotoImage(img)
+        imgr, error = self._load_photo_image(path, (34, 30))
+        if error:
+            return None, error
         box = tk.Label(frame, image=imgr)
         box.image = imgr
-        return box
+        return box, None
