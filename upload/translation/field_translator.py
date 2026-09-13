@@ -2,6 +2,7 @@ import re
 import time
 
 from deep_translator import GoogleTranslator
+from deep_translator.exceptions import TooManyRequests
 
 
 class FieldTranslator:
@@ -56,7 +57,7 @@ class FieldTranslator:
                             if not type(detail_add) is str:
                                 detail_add = detail_add[0]
                             break
-                        except AttributeError as error:
+                        except (AttributeError, TooManyRequests) as error:
                             print(error)
                         attempts += 1
                         time.sleep(0.5)
