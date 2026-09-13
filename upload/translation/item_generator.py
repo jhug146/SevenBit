@@ -38,7 +38,7 @@ class ItemGenerator:
         country_code = self.translation_config.country_codes[country_index]
         no_long_text_translation = self.translation_config.no_long_text_translation
 
-        if not (country_code in no_long_text_translation):
+        if not (country_code in no_long_text_translation) and country_code != "DE":
             inside_leg = translated_dict["IS_Inside Leg"][:2]
             translated_dict["IS_Inside Leg"] = _in_to_cm(inside_leg) + "cm"
 
