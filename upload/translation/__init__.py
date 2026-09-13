@@ -33,6 +33,6 @@ class EbayTranslator:
                 result = self.generator.generate(translated_dict, i, gt_code, item)
                 item_translation.append(result)
 
-            translated_items.append(ItemBatch(item_translation))
+            translated_items.append(ItemBatch(item_translation, original=item))
 
         return translated_items

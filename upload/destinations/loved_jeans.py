@@ -84,7 +84,7 @@ class WebsiteDestination(Destination):
             return None
 
     def upload_item(self, item_batch, images, listing_number: int) -> UploadResult:
-        item = item_batch.default
+        item = item_batch.original
         website_data = self.account_config.website_item
         to_upload = {}
         for key, value in self.upload_config.field_mapping.items():

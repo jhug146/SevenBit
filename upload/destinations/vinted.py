@@ -344,7 +344,7 @@ class VintedDestination(Destination):
         return path_list or None
 
     def upload_item(self, item_batch, images: list | None, listing_number: int) -> UploadResult:
-        item = item_batch.default
+        item = item_batch.original
         with self._lock:
             try:
                 result = self._do_upload(item, images)
