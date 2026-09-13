@@ -144,3 +144,9 @@ class ScrollableFrame(tk.Frame):
         self.canvas.configure(yscrollcommand=scrollbar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+
+        self.canvas.bind("<Enter>", lambda e: self.canvas.bind_all("<MouseWheel>", self._on_mousewheel))
+        self.canvas.bind("<Leave>", lambda e: self.canvas.unbind_all("<MouseWheel>"))
+
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
