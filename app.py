@@ -80,7 +80,7 @@ class App:
         upload_mode_dialog = UploadModeDialog(upload_changer, item_type.accounts)
 
         ui.register_actions(AppActions(
-            import_file=functools.partial(import_file, ui),
+            import_file=functools.partial(import_file, ui, item_type.accounts.import_folder),
             upload=upload.request_upload,
             download=download_dialog.show,
             switch_account=account_dialog.show,

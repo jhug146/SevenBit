@@ -20,6 +20,3 @@ class DownloadConfig(BaseConfig):
 
     @property
     def substrings(self): return self._data["substrings"]
-
-    @property
-    def save_folder(self): return self._data["save_folder"]

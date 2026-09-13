@@ -40,6 +40,12 @@ class AccountConfig(BaseConfig):
     @property
     def fastforex_api_key(self): return self._current["fastforex-api-key"]
 
+    @property
+    def save_folder(self): return self._current["save_folder"]
+
+    @property
+    def import_folder(self): return self._current["import_folder"]
+
     def policies(self, item_type_name): return self._current["policies"][item_type_name]
 
     def set_upload_attr(self, upload):

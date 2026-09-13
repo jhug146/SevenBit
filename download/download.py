@@ -145,9 +145,9 @@ class GetItems(object):
 
     def make_folder(self):
         i = 1
-        self.folder = self.download_config.save_folder + "/image_folder-1"
+        self.folder = self.accounts.save_folder + "/image_folder-1"
         while os.path.exists(self.folder):
-            self.folder = self.download_config.save_folder + f"/image_folder-{i}"
+            self.folder = self.accounts.save_folder + f"/image_folder-{i}"
             i += 1
         try:
             os.mkdir(self.folder)
@@ -167,7 +167,7 @@ class GetItems(object):
             if items:
                 data.extend(items)
 
-        save_file = self.download_config.save_folder + "/ebay-import.csv"
+        save_file = self.accounts.save_folder + "/ebay-import.csv"
         try:
             write_csv(save_file, data)
             os.system(f"start excel.exe {save_file}")

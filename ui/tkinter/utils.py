@@ -24,8 +24,9 @@ def get_csv_as_list(file, headers):
         return None
 
 
-def import_file(ui):
-    filename = tk.filedialog.askopenfilename(initialdir=os.path.expanduser("~"), title="Select file", filetype=(("CSV files", "*.csv"),("All files", "*.*")))
+def import_file(ui, default_dir=None):
+    initialdir = default_dir if default_dir and os.path.isdir(default_dir) else os.path.expanduser("~")
+    filename = tk.filedialog.askopenfilename(initialdir=initialdir, title="Select file", filetype=(("CSV files", "*.csv"),("All files", "*.*")))
     if not filename:
         return None
     if filename[-4:] != ".csv":
