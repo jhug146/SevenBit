@@ -262,12 +262,8 @@ class UI(BaseUI):
         var_dict = {}
         titles = tuple(self.item_list.items[n].keys())
 
-        price_row_y = max(185, 65 + len(self.item_list.items[n].conditions) * 40 + 10)
-
         headers = (
             ("Title", "Title:", 0, 0, 0, 20, 73),
-            ("Price", "Price:", 50, price_row_y, 100, price_row_y, 10),
-            ("SKU", "SKU:", 400, price_row_y, 450, price_row_y, 10)
         )
         for (list_pos, label, x1, y1, x2, y2, width) in headers:
             var_dict[list_pos] = tk.StringVar(value=self.item_list.items[n][list_pos])
@@ -285,7 +281,8 @@ class UI(BaseUI):
         for i, label in enumerate(titles):
             if label in displayed_details:
                 var_dict[label] = tk.StringVar(value=self.item_list.items[n][label])
-                tk.Label(self.specifics_frame, font=self.small_font, text=label[3:]).grid(row=i+1, column=0)
+                display_label = label[3:] if label.startswith("IS_") else label
+                tk.Label(self.specifics_frame, font=self.small_font, text=display_label).grid(row=i+1, column=0)
                 tk.Entry(self.specifics_frame, textvariable=var_dict[label], font=self.small_font, width=60).grid(row=i+1, column=1)
 
         tk.Button(self.right_frame, text="Save Changes", relief="ridge", font=self.big_font, pady=10, padx=10, command=save_current, bg="#139490", fg="white").place(x=50, y=955)

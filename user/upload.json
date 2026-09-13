@@ -343,6 +343,8 @@
       "min_price": 7
     },
     "display_order": [
+      "SKU",
+      "Price",
       "IS_Price",
       "IS_Brand",
       "IS_Colour",
@@ -384,6 +386,8 @@
   "polo shirt": {
     "name": "polo shirt",
     "display_order": [
+      "SKU",
+      "Price",
       "IS_Brand",
       "IS_Colour",
       "IS_Shirt Length",
