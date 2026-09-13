@@ -381,6 +381,11 @@
     "category_id_map": {
       "Men": "11483",
       "Women": "11554"
+    },
+    "condition_labels": {
+      "1000": "New with tags",
+      "2990": "Very good",
+      "3000": "Good"
     }
   },
   "polo shirt": {

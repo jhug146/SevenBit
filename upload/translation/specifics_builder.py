@@ -3,6 +3,17 @@ import re
 from upload.models.item import Item
 
 
+def compute_contains_specifics(base_dict, contains_specifics):
+    result = {}
+    for field, spec in contains_specifics.items():
+        source = base_dict.get(spec["source"], "").lower()
+        for case in spec["cases"]:
+            if case["contains"].lower() in source:
+                result[field] = case["value"]
+                break
+    return result
+
+
 class SpecificsBuilder:
     def __init__(self, translation_config):
         self.translation_config = translation_config
@@ -39,13 +50,7 @@ class SpecificsBuilder:
                 if "max" not in entry or value < entry["max"]:
                     ranged[field] = entry["value"]
                     break
-        contains = {}
-        for field, spec in self.translation_config.contains_specifics.items():
-            source = base_dict.get(spec["source"], "").lower()
-            for case in spec["cases"]:
-                if case["contains"].lower() in source:
-                    contains[field] = case["value"]
-                    break
+        contains = compute_contains_specifics(base_dict, self.translation_config.contains_specifics)
         equality = {
             k: (v["if_equal"] if all(str(base_dict.get(a, '')) == str(base_dict.get(b, '')) for a, b in v["pairs"]) else v["else"])
             for k, v in self.translation_config.equality_specifics.items()

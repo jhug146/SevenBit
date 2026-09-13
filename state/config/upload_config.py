@@ -59,3 +59,6 @@ class UploadConfig(BaseConfig):
 
     @property
     def category_id_map(self): return self._data["category_id_map"]
+
+    @property
+    def condition_labels(self): return self._data.get("condition_labels", {})

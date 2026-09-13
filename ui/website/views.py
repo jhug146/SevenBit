@@ -9,6 +9,7 @@ from django.http import HttpResponse, StreamingHttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 
 from ui.website.state import state
+from upload.translation.specifics_builder import compute_contains_specifics
 
 
 # ---------------------------------------------------------------------------
@@ -36,6 +37,14 @@ def _path_to_url(path: str) -> str:
 def _run_in_thread(fn, *args):
     t = threading.Thread(target=fn, args=args, daemon=True)
     t.start()
+
+
+def _apply_condition_label(item, translation_config, upload_config):
+    if not translation_config or not upload_config:
+        return
+    code = compute_contains_specifics(item.to_dict(), translation_config.contains_specifics).get("eBay Condition")
+    if code:
+        item.ebay_condition = upload_config.condition_labels.get(code, code)
 
 
 # ---------------------------------------------------------------------------
@@ -129,6 +138,11 @@ def item_detail(request, n):
 
     item = state.item_list.items[n]
     display_order = state.item_type.upload.display_order if state.item_type else []
+    _apply_condition_label(
+        item,
+        state.item_type.translation if state.item_type else None,
+        state.item_type.upload if state.item_type else None,
+    )
     count = len(state.item_list.items)
 
     image_paths = [p for p in item.images.split(";") if p] if item.images else []
@@ -136,7 +150,7 @@ def item_detail(request, n):
 
     all_keys = item.keys()
     displayed_specifics = [
-        (k, item[k], k[3:])
+        (k, item[k], k[3:] if k.startswith("IS_") else k)
         for k in all_keys
         if k in display_order
     ]

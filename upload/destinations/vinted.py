@@ -24,15 +24,6 @@ from upload.destinations.base import Destination
 from upload.models.upload_result import UploadResult, UploadStatus
 
 
-
-
-_CONDITION_MAP = {
-    "1000": "New with tags",
-    "2990": "Very good",
-    "3000": "Good",
-}
-
-
 def _chrome_major_version() -> int | None:
     try:
         import winreg
@@ -305,6 +296,7 @@ class VintedDestination(Destination):
 
     def __init__(self, upload_config):
         self._profile_dir = upload_config.vinted_profile_dir
+        self._condition_labels = upload_config.condition_labels
         self._driver = None
         self._display = None
         self._lock = threading.Lock()
@@ -403,7 +395,7 @@ class VintedDestination(Destination):
                                          item["IS_Brand"])
             _wander_mouse(driver)
             self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
-                                         _CONDITION_MAP.get(item.ebay_condition, "Good"))
+                                         self._condition_labels.get(item.ebay_condition, "Good"))
             self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
                                          "W" + item["IS_Size"])
             _wander_mouse(driver)
