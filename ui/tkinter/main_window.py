@@ -224,7 +224,11 @@ class UI(BaseUI):
                 """
                 if "http" in path:
                     return None
-                img = Image.open(path).resize((110, 110), Image.LANCZOS)
+                try:
+                    img = Image.open(path).resize((110, 110), Image.LANCZOS)
+                except FileNotFoundError:
+                    self.show_error(f"Error loading image: {path}")
+                    return None
                 imgr = PhotoImage(img)
                 box = tk.Label(self.img_frame, image=imgr)
                 box.image = imgr
