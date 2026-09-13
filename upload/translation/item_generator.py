@@ -42,9 +42,6 @@ class ItemGenerator:
             inside_leg = translated_dict["IS_Inside Leg"][:2]
             translated_dict["IS_Inside Leg"] = _in_to_cm(inside_leg) + "cm"
 
-        if gt_code == "it" or (gt_code == "de" and original_item["IS_Department"] == "Men"):
-            translated_dict["IS_Size"] = "W" + translated_dict["IS_Size"]
-
         translated_dict["Price"] = self._currency_change(
             float(translated_dict["Price"]),
             self.translation_config.currency_codes[country_index]
