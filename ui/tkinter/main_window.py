@@ -262,10 +262,12 @@ class UI(BaseUI):
         var_dict = {}
         titles = tuple(self.item_list.items[n].keys())
 
+        price_row_y = max(185, 65 + len(self.item_list.items[n].conditions) * 40 + 10)
+
         headers = (
             ("Title", "Title:", 0, 0, 0, 20, 73),
-            ("Price", "Price:", 50, 185, 100, 185, 10),
-            ("SKU", "SKU:", 400, 185, 450, 185, 10)
+            ("Price", "Price:", 50, price_row_y, 100, price_row_y, 10),
+            ("SKU", "SKU:", 400, price_row_y, 450, price_row_y, 10)
         )
         for (list_pos, label, x1, y1, x2, y2, width) in headers:
             var_dict[list_pos] = tk.StringVar(value=self.item_list.items[n][list_pos])
