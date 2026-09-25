@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import re
+import string
 import time
 import random
 import threading
@@ -568,10 +569,11 @@ class VintedDestination(Destination):
         _human_delay(0.8, 1.5)
 
         for label in (department, "Clothing", "Jeans", category_label):
-            s = _xpath_str(label)
+            s = _xpath_str(label.strip().lower())
             btn = wait.until(EC.presence_of_element_located((By.XPATH,
                 f"//div[@data-testid='catalog-select-dropdown-content']"
-                f"//div[@role='button'][.//*[normalize-space()={s}]]"
+                f"//div[@role='button' or @role='radio'][.//*[translate(normalize-space(.),"
+                f"'{string.ascii_uppercase}','{string.ascii_lowercase}')={s}]]"
             )))
             ActionChains(driver).move_to_element(btn).perform()
             _human_delay(0.2, 0.4)
@@ -607,10 +609,8 @@ class VintedDestination(Destination):
         Matching is case-insensitive and whitespace-normalised."""
         prefix = extra or "//*"
         s = _xpath_str(text.strip().lower())
-        _U = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        _l = "abcdefghijklmnopqrstuvwxyz"
         def _lc(expr):
-            return f"translate(normalize-space({expr}),'{_U}','{_l}')"
+            return f"translate(normalize-space({expr}),'{string.ascii_uppercase}','{string.ascii_lowercase}')"
         element = wait.until(EC.element_to_be_clickable((By.XPATH,
             f"{prefix}[{_lc('.')}={s}] | "
             f"{prefix}[.//span[{_lc('.')}={s}]] | "
