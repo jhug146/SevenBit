@@ -1,11 +1,29 @@
 import re
+import threading
 import time
 
 from deep_translator import GoogleTranslator
 from deep_translator.exceptions import TooManyRequests
 
 
+class _RateLimiter:
+    MIN_INTERVAL = 0.25
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._last_call = 0.0
+
+    def wait(self):
+        with self._lock:
+            elapsed = time.monotonic() - self._last_call
+            if elapsed < self.MIN_INTERVAL:
+                time.sleep(self.MIN_INTERVAL - elapsed)
+            self._last_call = time.monotonic()
+
+
 class FieldTranslator:
+    _rate_limiter = _RateLimiter()
+
     def __init__(self, translation_config):
         self.translation_config = translation_config
         self.translators = (
@@ -52,6 +70,7 @@ class FieldTranslator:
                 else:
                     attempts = 0
                     while attempts < 4:
+                        self._rate_limiter.wait()
                         try:
                             detail_add = self.translators[country_index - 3].translate_batch([detail])
                             if not type(detail_add) is str:
