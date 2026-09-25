@@ -171,6 +171,12 @@ class EbaySiteDestination(Destination):
     def upload_images(self, paths: str, sku: str, title: str, display) -> list | None:
         return self.image_store.get_images(paths, sku, title, display)
 
+    def _unignored_errors(self, errors) -> list:
+        if isinstance(errors, dict):
+            errors = [errors]
+        ignored_codes = set(self.upload_config.ignored_warnings.get(self.site.option_key, []))
+        return [error for error in errors if str(error.get("ErrorCode")) not in ignored_codes]
+
     def upload_item(self, item_batch, images: list | None, listing_number: int) -> UploadResult:
         details = item_batch[self.site_num]
 
@@ -254,7 +260,10 @@ class EbaySiteDestination(Destination):
             if ebay_status == "Success":
                 return UploadResult(UploadStatus.SUCCESS, message=f"{site_label}: Success")
             elif ebay_status == "Warning":
-                return UploadResult(UploadStatus.WARNING, message=f"{site_label}: Ebay Upload  ---  Warning  ----  {response}")
+                remaining_errors = self._unignored_errors(response.get("Errors", []))
+                if not remaining_errors:
+                    return UploadResult(UploadStatus.SUCCESS, message=f"{site_label}: Success (ignored warning)")
+                return UploadResult(UploadStatus.WARNING, message=f"{site_label}: Ebay Upload  ---  Warning  ----  {remaining_errors}")
             elif ebay_status == "Failure":
                 return UploadResult(UploadStatus.FAILURE, message=f"{site_label}: Ebay Upload  ---  Failure  ----  {response}")
             else:

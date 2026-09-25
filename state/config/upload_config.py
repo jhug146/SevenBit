@@ -62,3 +62,6 @@ class UploadConfig(BaseConfig):
 
     @property
     def condition_labels(self): return self._data.get("condition_labels", {})
+
+    @property
+    def ignored_warnings(self): return self._data.get("ignored_warnings", {})

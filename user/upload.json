@@ -386,6 +386,9 @@
       "1000": "New with tags",
       "2990": "Very good",
       "3000": "Good"
+    },
+    "ignored_warnings": {
+      "AUS": ["21920338"]
     }
   },
   "polo shirt": {
