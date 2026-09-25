@@ -395,10 +395,10 @@ class VintedDestination(Destination):
             self._select_dropdown_option(driver, wait, "[data-testid='brand-select-dropdown-input']",
                                          item["IS_Brand"])
             _wander_mouse(driver)
-            self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
-                                         self._condition_labels.get(item.ebay_condition, "Good"))
             self._select_dropdown_option(driver, wait, "[data-testid='category-size-single-grid-input']",
                                          "W" + item["IS_Size"])
+            self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
+                                         self._condition_labels.get(item.ebay_condition, "Good"))
             _wander_mouse(driver)
             self._clear_and_select_colour(driver, wait, item["IS_Colour"])
             try:
@@ -491,6 +491,7 @@ class VintedDestination(Destination):
         driver.execute_script("arguments[0].style.display = 'block';", file_input)
         file_input.send_keys("\n".join(str(pathlib.Path(p).resolve()) for p in temp_paths))
         _human_delay(1.0, 2.0)
+        driver.execute_script("arguments[0].style.display = 'none';", file_input)
         return temp_paths
 
     def _fill_text(self, driver, wait, selector: str, text: str):
