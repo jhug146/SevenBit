@@ -2,14 +2,20 @@ from __future__ import annotations
 
 from ebaysdk.trading import Connection as TradingConnection
 import ebaysdk.exception
+import requests
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from http import HTTPStatus
+import os
 import time
 
 from upload.destinations.image_store import ImageStore
 from upload.destinations.base import Destination
+from upload.destinations.ebay_oauth import EbayOAuth
 from upload.models.upload_result import UploadResult, ImageUploadResult, UploadStatus
+
+MEDIA_UPLOAD_URL = "https://apim.ebay.com/commerce/media/v1_beta/image/create_image_from_file"
 
 
 @dataclass(frozen=True)
@@ -51,6 +57,7 @@ class EbayImageStore:
         self.upload_mode = upload_mode
         self._image_store = ImageStore()
         self._fast_source = None
+        self.oauth = EbayOAuth(accounts)
 
     def set_fast_source(self, fast_source_fn):
         """Set the callable used instead of eBay hosting when fast_images is on.
@@ -91,20 +98,20 @@ class EbayImageStore:
     def _upload_pic(self, path, pic_id, sku, display) -> ImageUploadResult:
         with open(path, "rb") as f:
             image_data = f.read()
-        files = {"file": ("EbayImage", image_data)}
+        files = {"image": (os.path.basename(path), image_data)}
         attempts = 0
         while attempts < self.MAX_RETRIES:
             attempts += 1
             try:
-                connection = TradingConnection(config_file=None, siteid="3", devid=self.accounts.devid, certid=self.accounts.certid, token=self.accounts.token, appid=self.accounts.appid, domain="api.ebay.com", debug=False)
-                response = connection.execute("UploadSiteHostedPictures", self.upload_config.picture_data, files=files).dict()
-                if "Ack" not in response:
-                    display.push_error(response, sku)
-                    continue
-                elif response["Ack"] == "Failure":
-                    display.push_error(response["Errors"], sku)
-                    continue
-                break
+                access_token = self.oauth.get_access_token()
+                response = requests.post(
+                    MEDIA_UPLOAD_URL,
+                    headers={"Authorization": f"Bearer {access_token}"},
+                    files=files,
+                )
+                if response.status_code == HTTPStatus.CREATED:
+                    break
+                display.push_error(response.text, sku)
             except Exception as error:
                 display.push_error(error, sku)
         else:
@@ -112,10 +119,10 @@ class EbayImageStore:
             return ImageUploadResult(UploadStatus.FAILURE, pic_id)
 
         try:
-            url = response["SiteHostedPictureDetails"]["PictureSetMember"][0]["MemberURL"]
+            url = response.json()["imageUrl"]
             return ImageUploadResult(UploadStatus.SUCCESS, pic_id, url)
-        except KeyError as key_error:
-            display.push_error(key_error, sku)
+        except (KeyError, ValueError) as error:
+            display.push_error(error, sku)
             return ImageUploadResult(UploadStatus.FAILURE, pic_id)
 
 

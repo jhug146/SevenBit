@@ -23,6 +23,9 @@ class AccountConfig(BaseConfig):
     def token(self): return self._current["credentials"]["token"]
 
     @property
+    def refresh_token(self): return self._current["credentials"].get("refresh_token")
+
+    @property
     def allowed_destinations(self): return self._current.get("allowed_destinations")
 
     @property
