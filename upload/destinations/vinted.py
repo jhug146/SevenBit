@@ -488,10 +488,8 @@ class VintedDestination(Destination):
         file_input = wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, "[data-testid='add-photos-input']")
         ))
-        driver.execute_script("arguments[0].style.display = 'block';", file_input)
         file_input.send_keys("\n".join(str(pathlib.Path(p).resolve()) for p in temp_paths))
         _human_delay(1.0, 2.0)
-        driver.execute_script("arguments[0].style.display = 'none';", file_input)
         return temp_paths
 
     def _fill_text(self, driver, wait, selector: str, text: str):
@@ -612,11 +610,16 @@ class VintedDestination(Destination):
         s = _xpath_str(text.strip().lower())
         def _lc(expr):
             return f"translate(normalize-space({expr}),'{string.ascii_uppercase}','{string.ascii_lowercase}')"
-        element = wait.until(EC.element_to_be_clickable((By.XPATH,
-            f"{prefix}[{_lc('.')}={s}] | "
-            f"{prefix}[.//span[{_lc('.')}={s}]] | "
-            f"{prefix}[.//button[{_lc('.')}={s}]]"
-        )))
+        xpath = (f"{prefix}[self::span or self::button or self::li or @role='option' "
+                 f"or @role='button' or not(*)][{_lc('.')}={s}]")
+
+        def _first_visible(d):
+            for el in d.find_elements(By.XPATH, xpath):
+                if el.is_displayed() and el.is_enabled():
+                    return el
+            return False
+
+        element = wait.until(_first_visible)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
         _human_delay(0.2, 0.4)
         element.click()
