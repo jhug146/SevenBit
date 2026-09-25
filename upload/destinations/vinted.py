@@ -397,7 +397,7 @@ class VintedDestination(Destination):
             _wander_mouse(driver)
             self._select_dropdown_option(driver, wait, "[data-testid='category-condition-single-list-input']",
                                          self._condition_labels.get(item.ebay_condition, "Good"))
-            self._select_dropdown_option(driver, wait, "[data-testid='size-select-dropdown-input']",
+            self._select_dropdown_option(driver, wait, "[data-testid='category-size-single-grid-input']",
                                          "W" + item["IS_Size"])
             _wander_mouse(driver)
             self._clear_and_select_colour(driver, wait, item["IS_Colour"])
