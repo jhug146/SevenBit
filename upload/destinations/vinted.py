@@ -526,7 +526,10 @@ class VintedDestination(Destination):
 
     def _clear_and_select_colour(self, driver, wait, colour: str):
         try:
-            self._select_dropdown_option(driver, wait, "[data-testid='color-select-dropdown-input']", colour)
+            self._select_dropdown_option(
+                driver, wait, "[data-testid='color-select-dropdown-input']", colour,
+                scope="//div[@data-testid='color-select-dropdown-content']//*",
+            )
         except TimeoutException:
             pass
         # Explicitly close the dropdown before moving on to prevent
@@ -592,14 +595,13 @@ class VintedDestination(Destination):
 
         self._scroll_and_click(driver, wait, search_text)
 
-    def _select_dropdown_option(self, driver, wait, trigger_selector: str, option_text: str):
-        """Open a dropdown, scroll to the matching option, and click it."""
+    def _select_dropdown_option(self, driver, wait, trigger_selector: str, option_text: str, scope: str = ""):
         trigger = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, trigger_selector)))
         ActionChains(driver).move_to_element(trigger).perform()
         _human_delay(0.3, 0.6)
         ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
-        self._scroll_and_click(driver, wait, option_text)
+        self._scroll_and_click(driver, wait, option_text, extra=scope)
         _human_delay(0.5, 1.0)
 
     def _scroll_and_click(self, driver, wait, text: str, extra: str = ""):
