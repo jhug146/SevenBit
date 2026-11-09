@@ -1,4 +1,5 @@
 import re
+import html as html_lib
 import requests
 import functools
 
@@ -24,6 +25,7 @@ def _remove_dupes(word, repeat=True):
 
 class ItemGenerator:
     TITLE_MAX_LENGTH = 80
+    SUMMARY_MAX_LENGTH = 800
 
     def __init__(self, translation_config, accounts):
         self.translation_config = translation_config
@@ -156,4 +158,38 @@ class ItemGenerator:
             else:
                 html += item[cell]
 
+        summary = self._build_summary(item, country_num)
+        if summary and html.startswith("<div>"):
+            html = "<div>" + summary + html[len("<div>"):]
+
         return html
+
+    def _build_summary(self, item, country_num):
+        # schema.org description block: eBay copies its text into the listing's
+        # meta description, which the eBay app shows as the description preview.
+        templates = self.translation_config.description_summary
+        if not templates or country_num >= len(templates) or not templates[country_num]:
+            return ""
+
+        conditions = []
+        for key in ("Condition 1", "Condition 2", "Condition 3"):
+            text = str(item.get(key) or "").strip()
+            if text:
+                conditions.append(text if text[-1] in ".!?" else text + ".")
+
+        def lookup(match):
+            key = match.group(1)
+            if key == "Conditions":
+                return " ".join(conditions)
+            if key.startswith("$"):
+                field, factor = key[1:].split(";")
+                try:
+                    return str(round(float(item[field]) * float(factor)))
+                except (KeyError, ValueError, TypeError):
+                    return ""
+            return str(item.get(key) or "").strip()
+
+        text = re.sub(r"\{([^{}]+)\}", lookup, templates[country_num])
+        text = " ".join(text.split())[:self.SUMMARY_MAX_LENGTH]
+        return ('<div vocab="https://schema.org/" typeof="Product">'
+                f'<span property="description">{html_lib.escape(text)}</span></div>')

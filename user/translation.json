@@ -910,6 +910,15 @@
       "Si prega di vedere tutte le foto e leggere la 'DESCRIZIONE DEL VENDITORE' completa per ulteriori misurazioni.",
       "Por favor, vea todas las fotos y lea la 'DESCRIPCIÓN DEL VENDEDOR' completa para obtener más medidas. "
     ],
+    "description_summary": [
+      "{IS_Department}'s {IS_Model} {IS_Style} jeans in {IS_Colour}. Tag size W{Tag W} L{Tag L}, measured at W{Waist} L{Inside Leg}. {Conditions} Outside leg {Out. Leg}in, rise {Rise}in, hem width {Hem}in. Every pair is individually measured, so please check the actual measurements rather than the label size.",
+      "{IS_Department}'s {IS_Model} {IS_Style} jeans in {IS_Colour}. Tag size W{Tag W} L{Tag L}, measured at W{Waist} L{Inside Leg}. {Conditions} Outside leg {Out. Leg}in, rise {Rise}in, hem width {Hem}in. Every pair is individually measured, so please check the actual measurements rather than the label size.",
+      "{IS_Department}'s {IS_Model} {IS_Style} jeans in {IS_Colour}. Tag size W{Tag W} L{Tag L}, measured at W{Waist} L{Inside Leg}. {Conditions} Outside leg {Out. Leg}in, rise {Rise}in, hem width {Hem}in. Every pair is individually measured, so please check the actual measurements rather than the label size.",
+      "Jean {IS_Department} {IS_Model} {IS_Style}, couleur {IS_Colour}. Taille étiquette W{Tag W} L{Tag L}, taille réelle mesurée W{Waist} L{Inside Leg} ({$Waist;2.5} x {$Inside Leg;2.5} cm). {Conditions} Longueur de jambe extérieure {$Out. Leg;2.5} cm, montant {$Rise;2.5} cm, largeur du bas {$Hem;2.5} cm. Chaque jean est mesuré individuellement, merci de vous référer aux mesures réelles plutôt qu'à la taille de l'étiquette.",
+      "{IS_Department} {IS_Model} {IS_Style} Jeans in {IS_Colour}. Etikettengröße W{Tag W} L{Tag L}, tatsächlich gemessen W{Waist} L{Inside Leg} ({$Waist;2.5} x {$Inside Leg;2.5} cm). {Conditions} Außenbeinlänge {$Out. Leg;2.5} cm, Leibhöhe {$Rise;2.5} cm, Saumweite {$Hem;2.5} cm. Jede Jeans wird einzeln vermessen, bitte orientieren Sie sich an den tatsächlichen Maßen statt an der Etikettengröße.",
+      "Jeans {IS_Department} {IS_Model} {IS_Style}, colore {IS_Colour}. Taglia in etichetta W{Tag W} L{Tag L}, misura reale W{Waist} L{Inside Leg} ({$Waist;2.5} x {$Inside Leg;2.5} cm). {Conditions} Lunghezza esterna {$Out. Leg;2.5} cm, altezza cavallo {$Rise;2.5} cm, larghezza fondo gamba {$Hem;2.5} cm. Ogni paio è misurato singolarmente, si prega di controllare le misure reali anziché la taglia in etichetta.",
+      "Vaqueros {IS_Department} {IS_Model} {IS_Style}, color {IS_Colour}. Talla de etiqueta W{Tag W} L{Tag L}, medida real W{Waist} L{Inside Leg} ({$Waist;2.5} x {$Inside Leg;2.5} cm). {Conditions} Largo exterior {$Out. Leg;2.5} cm, tiro {$Rise;2.5} cm, ancho de bajo {$Hem;2.5} cm. Cada par se mide individualmente, por lo que le rogamos que consulte las medidas reales en lugar de la talla de la etiqueta."
+    ],
     "condition_translation": {
       "Condition 1": {
         "In very good condition": [

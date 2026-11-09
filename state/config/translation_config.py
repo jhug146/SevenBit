@@ -71,3 +71,6 @@ class TranslationConfig(BaseConfig):
 
     @property
     def leave_html(self): return self._data.get("leave_html")
+
+    @property
+    def description_summary(self): return self._data.get("description_summary")
