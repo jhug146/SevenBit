@@ -241,6 +241,27 @@ def _human_delay(low=0.4, high=1.4):
     time.sleep(random.uniform(low, high))
 
 
+def _move_to(driver, element):
+    """Hover element, first wheel-scrolling in human-sized steps if it's off-screen
+    (avoids 'move target out of bounds')."""
+    _offscreen_js = (
+        "const r = arguments[0].getBoundingClientRect();"
+        "const m = 60;"
+        "if (r.top < m) return r.top - m - Math.random() * 80;"
+        "if (r.bottom > window.innerHeight - m) return r.bottom - window.innerHeight + m + Math.random() * 80;"
+        "return 0;"
+    )
+    for _ in range(40):
+        remaining = driver.execute_script(_offscreen_js, element)
+        if not remaining:
+            break
+        step = int(min(abs(remaining), random.randint(80, 180)))
+        ActionChains(driver).scroll_by_amount(0, step if remaining > 0 else -step).perform()
+        time.sleep(random.uniform(0.03, 0.09))
+    time.sleep(random.uniform(0.15, 0.35))
+    ActionChains(driver).move_to_element(element).perform()
+
+
 def _wander_mouse(driver):
     """Move the mouse to a few random nearby positions to simulate idle movement."""
     try:
@@ -417,7 +438,7 @@ class VintedDestination(Destination):
                 medium_parcel = wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-testid='package_type_selector_2--input']")
                 ))
-                ActionChains(driver).move_to_element(medium_parcel).perform()
+                _move_to(driver, medium_parcel)
                 _human_delay(0.2, 0.5)
                 ActionChains(driver).click(medium_parcel).perform()
                 _human_delay(0.3, 0.7)
@@ -429,7 +450,7 @@ class VintedDestination(Destination):
                 save_btn = wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
                 ))
-                ActionChains(driver).move_to_element(save_btn).perform()
+                _move_to(driver, save_btn)
                 _human_delay(0.3, 0.8)
                 ActionChains(driver).click(save_btn).perform()
                 _human_delay(2.0, 4.0)
@@ -445,7 +466,7 @@ class VintedDestination(Destination):
                 draft_btn = wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-testid='upload-form-save-draft-button']")
                 ))
-                ActionChains(driver).move_to_element(draft_btn).perform()
+                _move_to(driver, draft_btn)
                 _human_delay(0.3, 0.8)
                 ActionChains(driver).click(draft_btn).perform()
                 _human_delay(2.0, 4.0)
@@ -494,7 +515,7 @@ class VintedDestination(Destination):
 
     def _fill_text(self, driver, wait, selector: str, text: str):
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
-        ActionChains(driver).move_to_element(element).perform()
+        _move_to(driver, element)
         _human_delay(0.2, 0.4)
         ActionChains(driver).click(element).perform()
         _human_delay(0.2, 0.5)
@@ -517,7 +538,7 @@ class VintedDestination(Destination):
                 try:
                     label = chip.get_attribute("aria-label") or chip.find_element(By.XPATH, "..").text
                     if correct_colour.lower() not in label.lower():
-                        ActionChains(driver).move_to_element(chip).click(chip).perform()
+                        _move_to(driver, chip); ActionChains(driver).click(chip).perform()
                         _human_delay(0.2, 0.4)
                 except Exception:
                     pass
@@ -525,32 +546,13 @@ class VintedDestination(Destination):
             pass
 
     def _clear_and_select_colour(self, driver, wait, colour: str):
-        trigger_sel = "[data-testid='color-select-dropdown-input']"
-        # Vinted changes its dropdown markup periodically; try progressively
-        # broader scopes for the colour options rather than silently skipping.
-        scopes = [
-            "//div[@data-testid='color-select-dropdown-content']//*",
-            "//*[starts-with(@data-testid,'color-select')]//*",
-            "//input[@id='color']/ancestor::li[1]//*",
-            "",
-        ]
-        selected = False
-        trigger = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, trigger_sel)))
-        ActionChains(driver).move_to_element(trigger).perform()
-        _human_delay(0.3, 0.6)
-        ActionChains(driver).click(trigger).perform()
-        _human_delay(0.8, 1.5)
-        short_wait = WebDriverWait(driver, 4)
-        for scope in scopes:
-            try:
-                self._scroll_and_click(driver, short_wait, colour, extra=scope)
-                selected = True
-                break
-            except TimeoutException:
-                continue
-        _human_delay(0.5, 1.0)
-        if not selected and self._display:
-            self._display.push_error(f"Vinted: could not select colour '{colour}' — please set it manually", "")
+        try:
+            self._select_dropdown_option(
+                driver, wait, "[data-testid='color-select-dropdown-input']", colour,
+                scope="//div[@data-testid='color-select-dropdown-content']//*",
+            )
+        except TimeoutException:
+            pass
         # Explicitly close the dropdown before moving on to prevent
         # subsequent mouse movements landing on still-open colour options
         driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
@@ -584,7 +586,7 @@ class VintedDestination(Destination):
         trigger = wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "[data-testid='catalog-select-dropdown-input']")
         ))
-        ActionChains(driver).move_to_element(trigger).perform()
+        _move_to(driver, trigger)
         _human_delay(0.3, 0.6)
         ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
@@ -596,7 +598,7 @@ class VintedDestination(Destination):
                 f"//div[@role='button' or @role='radio'][.//*[translate(normalize-space(.),"
                 f"'{string.ascii_uppercase}','{string.ascii_lowercase}')={s}]]"
             )))
-            ActionChains(driver).move_to_element(btn).perform()
+            _move_to(driver, btn)
             _human_delay(0.2, 0.4)
             ActionChains(driver).click(btn).perform()
             _human_delay(0.8, 1.5)
@@ -616,7 +618,7 @@ class VintedDestination(Destination):
 
     def _select_dropdown_option(self, driver, wait, trigger_selector: str, option_text: str, scope: str = ""):
         trigger = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, trigger_selector)))
-        ActionChains(driver).move_to_element(trigger).perform()
+        _move_to(driver, trigger)
         _human_delay(0.3, 0.6)
         ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
