@@ -438,7 +438,7 @@ class VintedDestination(Destination):
                 medium_parcel = wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-testid='package_type_selector_2--input']")
                 ))
-                _move_to(driver, medium_parcel)
+                ActionChains(driver).move_to_element(medium_parcel).perform()
                 _human_delay(0.2, 0.5)
                 ActionChains(driver).click(medium_parcel).perform()
                 _human_delay(0.3, 0.7)
@@ -450,7 +450,7 @@ class VintedDestination(Destination):
                 save_btn = wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-testid='upload-form-save-button']")
                 ))
-                _move_to(driver, save_btn)
+                ActionChains(driver).move_to_element(save_btn).perform()
                 _human_delay(0.3, 0.8)
                 ActionChains(driver).click(save_btn).perform()
                 _human_delay(2.0, 4.0)
@@ -466,7 +466,7 @@ class VintedDestination(Destination):
                 draft_btn = wait.until(EC.element_to_be_clickable(
                     (By.CSS_SELECTOR, "[data-testid='upload-form-save-draft-button']")
                 ))
-                _move_to(driver, draft_btn)
+                ActionChains(driver).move_to_element(draft_btn).perform()
                 _human_delay(0.3, 0.8)
                 ActionChains(driver).click(draft_btn).perform()
                 _human_delay(2.0, 4.0)
@@ -515,7 +515,7 @@ class VintedDestination(Destination):
 
     def _fill_text(self, driver, wait, selector: str, text: str):
         element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
-        _move_to(driver, element)
+        ActionChains(driver).move_to_element(element).perform()
         _human_delay(0.2, 0.4)
         ActionChains(driver).click(element).perform()
         _human_delay(0.2, 0.5)
@@ -538,7 +538,7 @@ class VintedDestination(Destination):
                 try:
                     label = chip.get_attribute("aria-label") or chip.find_element(By.XPATH, "..").text
                     if correct_colour.lower() not in label.lower():
-                        _move_to(driver, chip); ActionChains(driver).click(chip).perform()
+                        ActionChains(driver).move_to_element(chip).click(chip).perform()
                         _human_delay(0.2, 0.4)
                 except Exception:
                     pass
@@ -547,10 +547,26 @@ class VintedDestination(Destination):
 
     def _clear_and_select_colour(self, driver, wait, colour: str):
         try:
-            self._select_dropdown_option(
-                driver, wait, "[data-testid='color-select-dropdown-input']", colour,
-                scope="//div[@data-testid='color-select-dropdown-content']//*",
-            )
+            trigger = wait.until(EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "[data-testid='color-select-dropdown-input']")
+            ))
+            _move_to(driver, trigger)
+            _human_delay(0.3, 0.6)
+            ActionChains(driver).click(trigger).perform()
+            _human_delay(0.8, 1.5)
+            # Colours are a grid of swatch tiles: <div role="checkbox" aria-label="Blue">
+            s = _xpath_str(colour.strip().lower())
+            tile = wait.until(EC.presence_of_element_located((By.XPATH,
+                f"//div[@data-testid='color-select-dropdown-content']"
+                f"//div[@role='checkbox'][translate(normalize-space(@aria-label),"
+                f"'{string.ascii_uppercase}','{string.ascii_lowercase}')={s}]"
+            )))
+            # The swatch grid scrolls inside its own card; bring the tile into view there
+            driver.execute_script("arguments[0].scrollIntoView({block: 'nearest'});", tile)
+            _human_delay(0.2, 0.4)
+            if tile.get_attribute("aria-checked") != "true":
+                ActionChains(driver).move_to_element(tile).click(tile).perform()
+            _human_delay(0.5, 1.0)
         except TimeoutException:
             pass
         # Explicitly close the dropdown before moving on to prevent
@@ -586,7 +602,7 @@ class VintedDestination(Destination):
         trigger = wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR, "[data-testid='catalog-select-dropdown-input']")
         ))
-        _move_to(driver, trigger)
+        ActionChains(driver).move_to_element(trigger).perform()
         _human_delay(0.3, 0.6)
         ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
@@ -598,7 +614,7 @@ class VintedDestination(Destination):
                 f"//div[@role='button' or @role='radio'][.//*[translate(normalize-space(.),"
                 f"'{string.ascii_uppercase}','{string.ascii_lowercase}')={s}]]"
             )))
-            _move_to(driver, btn)
+            ActionChains(driver).move_to_element(btn).perform()
             _human_delay(0.2, 0.4)
             ActionChains(driver).click(btn).perform()
             _human_delay(0.8, 1.5)
@@ -618,7 +634,7 @@ class VintedDestination(Destination):
 
     def _select_dropdown_option(self, driver, wait, trigger_selector: str, option_text: str, scope: str = ""):
         trigger = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, trigger_selector)))
-        _move_to(driver, trigger)
+        ActionChains(driver).move_to_element(trigger).perform()
         _human_delay(0.3, 0.6)
         ActionChains(driver).click(trigger).perform()
         _human_delay(0.8, 1.5)
