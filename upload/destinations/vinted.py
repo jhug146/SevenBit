@@ -525,13 +525,32 @@ class VintedDestination(Destination):
             pass
 
     def _clear_and_select_colour(self, driver, wait, colour: str):
-        try:
-            self._select_dropdown_option(
-                driver, wait, "[data-testid='color-select-dropdown-input']", colour,
-                scope="//div[@data-testid='color-select-dropdown-content']//*",
-            )
-        except TimeoutException:
-            pass
+        trigger_sel = "[data-testid='color-select-dropdown-input']"
+        # Vinted changes its dropdown markup periodically; try progressively
+        # broader scopes for the colour options rather than silently skipping.
+        scopes = [
+            "//div[@data-testid='color-select-dropdown-content']//*",
+            "//*[starts-with(@data-testid,'color-select')]//*",
+            "//input[@id='color']/ancestor::li[1]//*",
+            "",
+        ]
+        selected = False
+        trigger = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, trigger_sel)))
+        ActionChains(driver).move_to_element(trigger).perform()
+        _human_delay(0.3, 0.6)
+        ActionChains(driver).click(trigger).perform()
+        _human_delay(0.8, 1.5)
+        short_wait = WebDriverWait(driver, 4)
+        for scope in scopes:
+            try:
+                self._scroll_and_click(driver, short_wait, colour, extra=scope)
+                selected = True
+                break
+            except TimeoutException:
+                continue
+        _human_delay(0.5, 1.0)
+        if not selected and self._display:
+            self._display.push_error(f"Vinted: could not select colour '{colour}' — please set it manually", "")
         # Explicitly close the dropdown before moving on to prevent
         # subsequent mouse movements landing on still-open colour options
         driver.find_element(By.TAG_NAME, "body").send_keys(Keys.ESCAPE)
